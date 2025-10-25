@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own profile and DVC contracts
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Trips access control - owner and shared users can read/write
+    match /trips/{tripId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.metadata.owner_id == request.auth.uid || 
+         request.auth.uid in resource.data.metadata.shared_with);
+      allow create: if request.auth != null && 
+        request.auth.uid == resource.data.metadata.owner_id;
+    }
+    
+    // Trip days - same access as parent trip
+    match /trips/{tripId}/days/{dayId} {
+      allow read, write: if request.auth != null && 
+        (get(/databases/$(database)/documents/trips/$(tripId)).data.metadata.owner_id == request.auth.uid ||
+         request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.metadata.shared_with);
+    }
+    
+    // Trip meals - same access as parent trip
+    match /trips/{tripId}/days/{dayId}/meals/{mealId} {
+      allow read, write: if request.auth != null && 
+        (get(/databases/$(database)/documents/trips/$(tripId)).data.metadata.owner_id == request.auth.uid ||
+         request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.metadata.shared_with);
+    }
+    
+    // Restaurants - public read access
+    match /restaurants/{restaurantId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admins can modify restaurants
+    }
+    
+    // Notifications - users can only access their own notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.auth.uid == resource.data.user_id;
+    }
+  }
+}
