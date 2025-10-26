@@ -146,8 +146,9 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
               
               return (
                 <Card style={styles.dayCard}>
-                  <Card.Content>
-                    <View style={styles.dayHeader}>
+                  <Card.Content style={styles.dayCardContent}>
+                    <View style={styles.dayRow}>
+                      {/* Day Info */}
                       <View style={styles.dayInfo}>
                         <Text variant="titleSmall" style={styles.dayTitle}>
                           Day {index + 1}
@@ -157,9 +158,10 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                         </Text>
                       </View>
                       
-                      {existingDay ? (
-                        <View style={styles.dayDetails}>
-                          <View style={styles.chipsRow}>
+                      {/* Park & Hotel */}
+                      <View style={styles.dayMiddle}>
+                        {existingDay ? (
+                          <>
                             <Chip 
                               icon="map-marker" 
                               style={styles.parkChip}
@@ -174,7 +176,39 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                             >
                               {existingDay.hotel || 'No hotel'}
                             </Chip>
+                          </>
+                        ) : (
+                          <Text variant="bodySmall" style={styles.notPlanned}>
+                            Not planned
+                          </Text>
+                        )}
+                      </View>
+                      
+                      {/* Meals */}
+                      <View style={styles.dayMeals}>
+                        {existingDay && existingDay.meals && existingDay.meals.length > 0 ? (
+                          <View style={styles.mealsRow}>
+                            {existingDay.meals.slice(0, 2).map((meal, mealIndex) => (
+                              <Chip key={mealIndex} style={styles.mealChip} compact>
+                                {meal.type}: {meal.restaurant || 'TBD'}
+                              </Chip>
+                            ))}
+                            {existingDay.meals.length > 2 && (
+                              <Chip style={styles.moreMealsChip} compact>
+                                +{existingDay.meals.length - 2}
+                              </Chip>
+                            )}
                           </View>
+                        ) : (
+                          <Text variant="bodySmall" style={styles.noMeals}>
+                            No meals
+                          </Text>
+                        )}
+                      </View>
+                      
+                      {/* Action Button */}
+                      <View style={styles.dayAction}>
+                        {existingDay ? (
                           <Button
                             mode="outlined"
                             compact
@@ -183,38 +217,18 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                           >
                             Edit
                           </Button>
-                        </View>
-                      ) : (
-                        <Button
-                          mode="contained"
-                          compact
-                          onPress={() => handleAddDay()}
-                          style={styles.addDayButton}
-                        >
-                          Plan Day
-                        </Button>
-                      )}
-                    </View>
-                    
-                    {existingDay && (
-                      <View style={styles.dayContent}>
-                        <Divider style={styles.divider} />
-                        <Text variant="bodySmall" style={styles.mealsTitle}>
-                          Meals:
-                        </Text>
-                        <View style={styles.mealsContainer}>
-                          {existingDay.meals?.map((meal, mealIndex) => (
-                            <Chip key={mealIndex} style={styles.mealChip} compact>
-                              {meal.type}: {meal.restaurant || 'TBD'}
-                            </Chip>
-                          )) || (
-                            <Text variant="bodySmall" style={styles.noMeals}>
-                              No meals planned
-                            </Text>
-                          )}
-                        </View>
+                        ) : (
+                          <Button
+                            mode="contained"
+                            compact
+                            onPress={() => handleAddDay()}
+                            style={styles.addDayButton}
+                          >
+                            Plan
+                          </Button>
+                        )}
                       </View>
-                    )}
+                    </View>
                   </Card.Content>
                 </Card>
               );
@@ -328,85 +342,87 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   dayCard: {
-    marginBottom: 12,
+    marginBottom: 8,
     marginHorizontal: 4,
     elevation: 2,
     borderRadius: 8,
   },
-  dayHeader: {
+  dayCardContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  dayRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 12,
   },
   dayInfo: {
-    flex: 1,
-    minWidth: 120,
-    marginBottom: 8,
+    minWidth: 80,
+    flexShrink: 0,
   },
   dayTitle: {
     fontWeight: 'bold',
     color: '#1976d2',
-    fontSize: 16,
+    fontSize: 14,
   },
   dayDate: {
     color: '#666',
     marginTop: 2,
-    fontSize: 12,
+    fontSize: 11,
   },
-  dayDetails: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: 4,
-    maxWidth: '60%',
-  },
-  chipsRow: {
+  dayMiddle: {
+    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    justifyContent: 'flex-end',
+    minWidth: 120,
   },
   parkChip: {
     backgroundColor: '#E8F5E8',
-    marginBottom: 4,
-    maxWidth: 120,
+    fontSize: 10,
   },
   hotelChip: {
     backgroundColor: '#FFF3E0',
-    marginBottom: 4,
-    maxWidth: 120,
+    fontSize: 10,
   },
-  editDayButton: {
-    marginTop: 4,
-    minWidth: 60,
+  dayMeals: {
+    flex: 1,
+    minWidth: 100,
   },
-  addDayButton: {
-    backgroundColor: '#1976d2',
-    marginTop: 4,
-    minWidth: 80,
-  },
-  dayContent: {
-    marginTop: 12,
-  },
-  divider: {
-    marginBottom: 8,
-  },
-  mealsTitle: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#666',
-  },
-  mealsContainer: {
+  mealsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
   },
   mealChip: {
     backgroundColor: '#F3E5F5',
+    fontSize: 10,
+  },
+  moreMealsChip: {
+    backgroundColor: '#E0E0E0',
+    fontSize: 10,
+  },
+  dayAction: {
+    flexShrink: 0,
+  },
+  editDayButton: {
+    minWidth: 50,
+    height: 32,
+  },
+  addDayButton: {
+    backgroundColor: '#1976d2',
+    minWidth: 50,
+    height: 32,
+  },
+  notPlanned: {
+    fontStyle: 'italic',
+    color: '#999',
+    fontSize: 11,
   },
   noMeals: {
     fontStyle: 'italic',
     color: '#999',
+    fontSize: 11,
   },
   fab: {
     position: 'absolute',
