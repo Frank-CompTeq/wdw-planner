@@ -86,6 +86,7 @@ export default function DayCalendar({ startDate, endDate, days, onDateSelect, se
         }}
         minDate={startDate.toISOString().split('T')[0]}
         maxDate={endDate.toISOString().split('T')[0]}
+        current={startDate.toISOString().split('T')[0]}
         theme={{
           backgroundColor: '#ffffff',
           calendarBackground: '#ffffff',

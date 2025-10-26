@@ -131,13 +131,35 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
     };
   };
   
-  export const updateTrip = async (tripId: string, updates: Partial<TripMetadata>): Promise<void> => {
-    await updateDoc(doc(db, 'trips', tripId), {
-      'metadata': {
-        ...updates,
-        updated_at: Timestamp.now()
+  export const updateTrip = async (tripId: string, updates: any): Promise<void> => {
+    const updateData: any = {
+      'metadata.updated_at': Timestamp.now()
+    };
+
+    // Handle different update fields
+    if (updates.name) {
+      updateData['metadata.name'] = updates.name;
+    }
+    if (updates.start_date) {
+      updateData['metadata.start_date'] = Timestamp.fromDate(updates.start_date);
+    }
+    if (updates.end_date) {
+      updateData['metadata.end_date'] = Timestamp.fromDate(updates.end_date);
+    }
+    if (updates.use_dvc !== undefined) {
+      if (updates.use_dvc && updates.dvc_contract_id) {
+        updateData['dvc_booking'] = {
+          contract_used: updates.dvc_contract_id,
+          points_used: 0,
+          booking_window: '11_month',
+          reservation_date: Timestamp.now()
+        };
+      } else {
+        updateData['dvc_booking'] = null;
       }
-    });
+    }
+
+    await updateDoc(doc(db, 'trips', tripId), updateData);
   };
   
   export const deleteTrip = async (tripId: string): Promise<void> => {

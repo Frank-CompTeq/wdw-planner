@@ -10,6 +10,7 @@ import TripsListScreen from '../screens/trips/TripsListScreen';
 import TripDetailScreen from '../screens/trips/TripDetailScreen';
 import CreateTripScreen from '../screens/trips/CreateTripScreen';
 import EditDayScreen from '../screens/trips/EditDayScreen';
+import EditTripScreen from '../screens/trips/EditTripScreen';
 import DVCContractsScreen from '../screens/dvc/DVCContractsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   TripsList: undefined;
   TripDetail: { tripId: string };
   CreateTrip: undefined;
+  EditTrip: { tripId: string };
   EditDay: { tripId: string; dayId?: string; date: string };
   DVCContracts: undefined;
   Settings: undefined;
@@ -77,6 +79,11 @@ export default function AppNavigator() {
             name="CreateTrip" 
             component={CreateTripScreen}
             options={{ title: 'New Trip' }}
+          />
+          <Stack.Screen 
+            name="EditTrip" 
+            component={EditTripScreen}
+            options={{ title: 'Edit Trip' }}
           />
           <Stack.Screen 
             name="EditDay" 
