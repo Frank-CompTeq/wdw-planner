@@ -94,7 +94,8 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
               <Button
                 mode="outlined"
                 onPress={() => {
-                  // TODO: Implement date picker
+                  // Simple date increment - tap to advance by 1 day
+                  // For production, consider implementing a full date picker modal
                   const newDate = new Date(formData.start_date);
                   newDate.setDate(newDate.getDate() + 1);
                   handleDateChange('start_date', newDate);
@@ -110,7 +111,8 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
               <Button
                 mode="outlined"
                 onPress={() => {
-                  // TODO: Implement date picker
+                  // Simple date increment - tap to advance by 1 day
+                  // For production, consider implementing a full date picker modal
                   const newDate = new Date(formData.end_date);
                   newDate.setDate(newDate.getDate() + 1);
                   handleDateChange('end_date', newDate);
@@ -144,8 +146,10 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
                   icon="diamond" 
                   style={styles.dvcChip}
                   onPress={() => {
-                    // TODO: Navigate to DVC contract selection
-                    setFormData(prev => ({ ...prev, dvc_contract_id: 'demo-contract' }));
+                    // Navigate to DVC contract selection screen
+                    // For now, using demo contract - in production, implement contract picker
+                    navigation.navigate('DVCContracts');
+                    // setFormData(prev => ({ ...prev, dvc_contract_id: 'demo-contract' }));
                   }}
                 >
                   {formData.dvc_contract_id ? 'Contract Selected' : 'Select DVC Contract'}

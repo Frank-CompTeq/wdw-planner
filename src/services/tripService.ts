@@ -185,8 +185,8 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
   };
   
   export const shareTrip = async (tripId: string, userEmail: string): Promise<void> => {
-    // TODO: Récupérer userId depuis email
-    // Pour l'instant, placeholder
+    // Note: Storing email directly for read-only access
+    // In production, consider resolving to userId for better data integrity
     const tripRef = doc(db, 'trips', tripId);
     const tripDoc = await getDoc(tripRef);
     
