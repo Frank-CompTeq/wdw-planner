@@ -151,20 +151,22 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                     
                     {existingDay ? (
                       <View style={styles.dayDetails}>
-                        <Chip 
-                          icon="map-marker" 
-                          style={styles.parkChip}
-                          compact
-                        >
-                          {existingDay.park || 'No park selected'}
-                        </Chip>
-                        <Chip 
-                          icon="bed" 
-                          style={styles.hotelChip}
-                          compact
-                        >
-                          {existingDay.hotel || 'No hotel selected'}
-                        </Chip>
+                        <View style={styles.chipsRow}>
+                          <Chip 
+                            icon="map-marker" 
+                            style={styles.parkChip}
+                            compact
+                          >
+                            {existingDay.park || 'No park'}
+                          </Chip>
+                          <Chip 
+                            icon="bed" 
+                            style={styles.hotelChip}
+                            compact
+                          >
+                            {existingDay.hotel || 'No hotel'}
+                          </Chip>
+                        </View>
                         <Button
                           mode="outlined"
                           compact
@@ -267,10 +269,12 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
+    marginTop: 8,
   },
   chip: {
     backgroundColor: '#E3F2FD',
+    marginBottom: 4,
   },
   daysContainer: {
     flex: 1,
@@ -286,40 +290,61 @@ const styles = StyleSheet.create({
   },
   dayCard: {
     marginBottom: 12,
+    marginHorizontal: 4,
     elevation: 2,
+    borderRadius: 8,
   },
   dayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
   },
   dayInfo: {
     flex: 1,
+    minWidth: 120,
+    marginBottom: 8,
   },
   dayTitle: {
     fontWeight: 'bold',
     color: '#1976d2',
+    fontSize: 16,
   },
   dayDate: {
     color: '#666',
     marginTop: 2,
+    fontSize: 12,
   },
   dayDetails: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
+    maxWidth: '60%',
+  },
+  chipsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 4,
+    justifyContent: 'flex-end',
   },
   parkChip: {
     backgroundColor: '#E8F5E8',
+    marginBottom: 4,
+    maxWidth: 120,
   },
   hotelChip: {
     backgroundColor: '#FFF3E0',
+    marginBottom: 4,
+    maxWidth: 120,
   },
   editDayButton: {
-    marginLeft: 8,
+    marginTop: 4,
+    minWidth: 60,
   },
   addDayButton: {
     backgroundColor: '#1976d2',
+    marginTop: 4,
+    minWidth: 80,
   },
   dayContent: {
     marginTop: 12,
