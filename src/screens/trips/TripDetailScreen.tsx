@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, RefreshControl, Platform, Dimensions } from 'react-native';
-import { Text, Surface, Button, FAB, Chip, Card, Divider, IconButton } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, Platform, Dimensions } from 'react-native';
+import { Surface, Button } from 'react-native-paper';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import { useTrip } from '../../hooks/useTrips';
-import { Trip, TripDay } from '../../types';
-import DayCalendar from '../../components/DayCalendar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 
@@ -19,36 +17,136 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
   const [user] = useAuthState(auth);
   const { data: trip, isLoading, error, refetch } = useTrip(tripId);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [screenData] = useState(Dimensions.get('window'));
 
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setScreenData(window);
-    });
+  // Enhanced calendar component
+  const EnhancedCalendar = () => {
+    const calendarDays = getCalendarDays(trip.metadata.start_date, trip.metadata.end_date);
+    const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
+    const isWideScreen = screenData.width > 768;
+    
+    // Get day data for a specific date
+    const getDayData = (date: Date) => {
+      return trip.days?.find(day => {
+        const dayDate = new Date(day.date);
+        return dayDate.toDateString() === date.toDateString();
+      });
+    };
 
-    return () => subscription?.remove();
-  }, []);
+    // Check if a day has planning
+    const hasPlanning = (date: Date) => {
+      const dayData = getDayData(date);
+      return dayData && (dayData.park || dayData.hotel || (dayData.meals && dayData.meals.length > 0));
+    };
 
-  const handleEditTrip = () => {
-    navigation.navigate('EditTrip', { tripId });
-  };
+    // Check if a date is within the trip period
+    const isTripDate = (date: Date) => {
+      return date >= startDate && date <= endDate;
+    };
 
-  const handleEditDay = (day: TripDay) => {
-    navigation.navigate('EditDay', { tripId, dayId: day.id });
-  };
+    // Check if a date is today
+    const isToday = (date: Date) => {
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
 
-  const handleAddDay = () => {
-    // Navigate to add day screen or show date picker
-    navigation.navigate('EditDay', { tripId, dayId: 'new' });
-  };
+    // Handle day selection
+    const handleDayPress = (date: Date) => {
+      setSelectedDate(date);
+    };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return (
+      <Surface style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer} elevation={2}>
+        <Text variant="titleMedium" style={styles.calendarTitle}>
+          Trip Calendar
+        </Text>
+        
+        {/* Month/Year Header */}
+        <View style={styles.calendarHeader}>
+          <Text variant="bodyLarge" style={styles.monthYear}>
+            {trip.metadata.start_date.toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+          </Text>
+        </View>
+
+        {/* Day Headers */}
+        <View style={styles.dayHeaders}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <Text key={day} variant="caption" style={styles.dayHeader}>
+              {day}
+            </Text>
+          ))}
+        </View>
+
+        {/* Calendar Grid */}
+        <View style={styles.calendarGrid}>
+          {calendarDays.map((date, index) => {
+            if (!date) {
+              // Empty cell for days before month starts
+              return (
+                <View key={index} style={styles.emptyDay} />
+              );
+            }
+            
+            const dayData = getDayData(date);
+            const isSelected = selectedDate?.toDateString() === date.toDateString();
+            const hasPlan = hasPlanning(date);
+            const isTrip = isTripDate(date);
+            const isCurrentDay = isToday(date);
+            
+            return (
+              <Surface 
+                key={index} 
+                style={[
+                  styles.calendarDay,
+                  isTrip && styles.tripDay,
+                  isSelected && styles.selectedDay,
+                  hasPlan && styles.plannedDay,
+                  isCurrentDay && styles.todayDay
+                ]} 
+                elevation={isSelected ? 3 : 1}
+                onTouchEnd={() => handleDayPress(date)}
+              >
+                <Text variant="bodySmall" style={[
+                  styles.dayNumber,
+                  isTrip && styles.tripDayText,
+                  isSelected && styles.selectedDayText,
+                  hasPlan && styles.plannedDayText,
+                  isCurrentDay && styles.todayDayText
+                ]}>
+                  {date.getDate()}
+                </Text>
+                {hasPlan && (
+                  <View style={styles.planIndicator} />
+                )}
+                {isTrip && !hasPlan && (
+                  <View style={styles.tripIndicator} />
+                )}
+              </Surface>
+            );
+          })}
+        </View>
+
+        {/* Calendar Legend */}
+        <View style={styles.calendarLegend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.tripDay]} />
+            <Text variant="caption">Dates du voyage</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.plannedDay]} />
+            <Text variant="caption">Jour planifié</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.todayDay]} />
+            <Text variant="caption">Aujourd'hui</Text>
+          </View>
+        </View>
+
+        <Text variant="bodySmall" style={styles.calendarNote}>
+          {tripDays.length} days total • {trip.days?.length || 0} planned
+        </Text>
+      </Surface>
+    );
   };
 
   const getDaysBetweenDates = (startDate: Date, endDate: Date): Date[] => {
@@ -58,6 +156,33 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
     while (currentDate <= endDate) {
       days.push(new Date(currentDate));
       currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return days;
+  };
+
+  const getCalendarDays = (startDate: Date, endDate: Date): (Date | null)[] => {
+    const days: (Date | null)[] = [];
+    
+    // Get the month and year of the trip start
+    const tripMonth = startDate.getMonth();
+    const tripYear = startDate.getFullYear();
+    
+    // Get the first day of the month
+    const firstDayOfMonth = new Date(tripYear, tripMonth, 1);
+    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Get the number of days in the month
+    const daysInMonth = new Date(tripYear, tripMonth + 1, 0).getDate();
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(tripYear, tripMonth, day));
     }
     
     return days;
@@ -82,157 +207,115 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
     );
   }
 
-  const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
-  const existingDays = trip.days || [];
-  const isWeb = Platform.OS === 'web';
   const isWideScreen = screenData.width > 768;
-
-  console.log('Screen data:', screenData.width, 'isWideScreen:', isWideScreen, 'isWeb:', isWeb);
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <Surface style={styles.header} elevation={2}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleContainer}>
-            <Text variant="headlineMedium" style={styles.title}>
-              {trip.metadata.name}
-            </Text>
-            <Text variant="bodyMedium" style={styles.dates}>
-              {formatDate(trip.metadata.start_date)} - {formatDate(trip.metadata.end_date)}
-            </Text>
-          </View>
-          
-          <IconButton
-            icon="pencil"
-            size={24}
-            onPress={handleEditTrip}
-            style={styles.editButton}
-          />
-        </View>
-
-        <View style={styles.chipsContainer}>
-          <Chip icon="calendar" style={styles.chip}>
-            {tripDays.length} days
-          </Chip>
-          {trip.dvc_booking && (
-            <Chip icon="diamond" style={styles.chip}>
-              DVC Booking
-            </Chip>
-          )}
-          <Chip icon="account-group" style={styles.chip}>
-            {trip.metadata.shared_with.length + 1} travelers
-          </Chip>
-          {/* Debug indicator */}
-          <Chip style={[styles.chip, { backgroundColor: isWideScreen ? '#4CAF50' : '#FF9800' }]}>
-            {isWideScreen ? 'Web Layout' : 'Mobile Layout'} ({screenData.width}px)
-          </Chip>
-        </View>
+        <Text variant="headlineMedium" style={styles.title}>
+          {trip.metadata.name}
+        </Text>
+        <Text variant="bodyMedium" style={styles.dates}>
+          {trip.metadata.start_date.toLocaleDateString()} - {trip.metadata.end_date.toLocaleDateString()}
+        </Text>
       </Surface>
 
       {/* Main Content - Responsive Layout */}
       <View style={isWideScreen ? styles.webLayout : styles.mobileLayout}>
         {/* Calendar */}
-        <View style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer}>
-          <DayCalendar
-            startDate={trip.metadata.start_date}
-            endDate={trip.metadata.end_date}
-            days={existingDays}
-            onDateSelect={setSelectedDate}
-            selectedDate={selectedDate}
-            compact={isWideScreen}
-          />
-        </View>
+        <EnhancedCalendar />
 
         {/* Days List */}
         <View style={isWideScreen ? styles.webDaysContainer : styles.mobileDaysContainer}>
           <Text variant="titleMedium" style={styles.sectionTitle}>
-            Trip Days
+            {selectedDate ? `Day Details - ${selectedDate.toLocaleDateString()}` : 'Trip Days'}
           </Text>
-          
-          <FlatList
-            data={tripDays}
-            keyExtractor={(item, index) => `day-${index}`}
-            renderItem={({ item: date, index }) => {
-              const existingDay = existingDays.find(day => 
-                day.date.toDateString() === date.toDateString()
-              );
+        
+          {selectedDate ? (
+            // Show selected day details
+            (() => {
+              const dayData = trip.days?.find(day => {
+                const dayDate = new Date(day.date);
+                return dayDate.toDateString() === selectedDate.toDateString();
+              });
               
-              return (
-                <Card style={styles.dayCard}>
-                  <Card.Content style={styles.dayCardContent}>
-                    <View style={styles.dayRow}>
-                      {/* Day Info */}
-                      <View style={styles.dayInfo}>
-                        <Text variant="titleSmall" style={styles.dayTitle}>
-                          Day {index + 1}
-                        </Text>
-                        <Text variant="bodySmall" style={styles.dayDate}>
-                          {formatDate(date)}
-                        </Text>
-                      </View>
-                      
-                      {/* Park & Hotel */}
-                      <View style={styles.dayMiddle}>
-                        <Text style={styles.lineText} numberOfLines={1} ellipsizeMode="tail">
-                          {existingDay ? `${existingDay.park || 'No park'} • ${existingDay.hotel || 'No hotel'}` : 'Not planned'}
-                        </Text>
-                      </View>
-                      
-                      {/* Meals */}
-                      <View style={styles.dayMeals}>
-                        <Text style={styles.lineText} numberOfLines={1} ellipsizeMode="tail">
-                          {existingDay && existingDay.meals && existingDay.meals.length > 0
-                            ? `${existingDay.meals
-                                .slice(0, 2)
-                                .map(meal => `${meal.type}: ${meal.restaurant || 'TBD'}`)
-                                .join(' | ')}${existingDay.meals.length > 2 ? ` +${existingDay.meals.length - 2}` : ''}`
-                            : 'No meals'}
-                        </Text>
-                      </View>
-                      
-                      {/* Action Button */}
-                      <View style={styles.dayAction}>
-                        {existingDay ? (
-                          <Button
-                            mode="outlined"
-                            compact
-                            onPress={() => handleEditDay(existingDay)}
-                            style={styles.editDayButton}
-                          >
-                            Edit
-                          </Button>
-                        ) : (
-                          <Button
-                            mode="contained"
-                            compact
-                            onPress={() => handleAddDay()}
-                            style={styles.addDayButton}
-                          >
-                            Plan
-                          </Button>
-                        )}
-                      </View>
+              return dayData ? (
+                <Surface style={styles.selectedDayCard} elevation={2}>
+                  <Text variant="titleSmall" style={styles.selectedDayTitle}>
+                    {selectedDate.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </Text>
+                  <View style={styles.dayDetails}>
+                    <View style={styles.detailRow}>
+                      <Text variant="bodyMedium" style={styles.detailLabel}>Park:</Text>
+                      <Text variant="bodyMedium" style={styles.detailValue}>
+                        {dayData.park || 'Not planned'}
+                      </Text>
                     </View>
-                  </Card.Content>
-                </Card>
+                    <View style={styles.detailRow}>
+                      <Text variant="bodyMedium" style={styles.detailLabel}>Hotel:</Text>
+                      <Text variant="bodyMedium" style={styles.detailValue}>
+                        {dayData.hotel || 'Not planned'}
+                      </Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text variant="bodyMedium" style={styles.detailLabel}>Meals:</Text>
+                      <Text variant="bodyMedium" style={styles.detailValue}>
+                        {dayData.meals ? `${dayData.meals.length} planned` : 'None planned'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Button 
+                    mode="contained" 
+                    onPress={() => navigation.navigate('EditDay', { tripId, dayId: dayData.id })}
+                    style={styles.editDayButton}
+                  >
+                    Edit Day
+                  </Button>
+                </Surface>
+              ) : (
+                <Surface style={styles.unplannedDayCard} elevation={1}>
+                  <Text variant="titleSmall" style={styles.unplannedDayTitle}>
+                    {selectedDate.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </Text>
+                  <Text variant="bodyMedium" style={styles.unplannedDayText}>
+                    This day hasn't been planned yet.
+                  </Text>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => {
+                      // Create new day and navigate to edit
+                      navigation.navigate('EditDay', { tripId, date: selectedDate.toISOString() });
+                    }}
+                    style={styles.planDayButton}
+                  >
+                    Plan This Day
+                  </Button>
+                </Surface>
               );
-            }}
-            contentContainerStyle={styles.daysList}
-            refreshControl={
-              <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-            }
-          />
+            })()
+          ) : (
+            // Show all days list
+            trip.days && trip.days.length > 0 ? (
+              trip.days.map((day, index) => (
+                <Surface key={day.id} style={styles.dayCard} elevation={1}>
+                  <Text variant="titleSmall">Day {index + 1}</Text>
+                  <Text variant="bodySmall">
+                    Park: {day.park || 'Not planned'}
+                  </Text>
+                  <Text variant="bodySmall">
+                    Hotel: {day.hotel || 'Not planned'}
+                  </Text>
+                  <Text variant="bodySmall">
+                    Meals: {day.meals ? day.meals.length : 0}
+                  </Text>
+                </Surface>
+              ))
+            ) : (
+              <Text style={styles.noDaysText}>No days planned yet</Text>
+            )
+          )}
         </View>
       </View>
-
-      {/* FAB for adding new day */}
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={handleAddDay}
-        label="Add Day"
-      />
     </View>
   );
 }
@@ -241,67 +324,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  // Responsive Layout Styles
-  webLayout: {
-    flexDirection: 'row',
-    flex: 1,
-    paddingHorizontal: 16,
-    gap: 16,
-    minHeight: 0,
-    // Force web layout with explicit CSS
-    ...(Platform.OS === 'web' && {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'stretch',
-      justifyContent: 'flex-start',
-      width: '100%',
-      height: '100%',
-    }),
-  },
-  mobileLayout: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  webCalendarContainer: {
-    width: 350,
-    maxWidth: 350,
-    minWidth: 300,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    elevation: 2,
-    padding: 8,
-    alignSelf: 'flex-start',
-    // Force web calendar positioning
-    ...(Platform.OS === 'web' && {
-      flexShrink: 0,
-      flexGrow: 0,
-      flexBasis: '350px',
-      position: 'relative',
-      float: 'left',
-      marginRight: '16px',
-    }),
-  },
-  mobileCalendarContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  webDaysContainer: {
-    flex: 1,
-    paddingRight: 16,
-    minWidth: 0,
-    // Force web days container
-    ...(Platform.OS === 'web' && {
-      flexShrink: 1,
-      flexGrow: 1,
-      flexBasis: 'auto',
-      overflow: 'hidden',
-      position: 'relative',
-    }),
-  },
-  mobileDaysContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
   },
   centerContainer: {
     flex: 1,
@@ -315,15 +337,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'white',
   },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  titleContainer: {
-    flex: 1,
-  },
   title: {
     fontWeight: 'bold',
     color: '#1976d2',
@@ -332,137 +345,248 @@ const styles = StyleSheet.create({
   dates: {
     color: '#666',
   },
-  editButton: {
-    margin: 0,
-  },
-  chipsContainer: {
+  // Responsive Layout Styles
+  webLayout: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  chip: {
-    backgroundColor: '#E3F2FD',
-    marginBottom: 4,
-  },
-  daysContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    gap: 16,
+  },
+  mobileLayout: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  webCalendarContainer: {
+    width: 300,
+    maxWidth: 300,
+    minWidth: 250,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    alignSelf: 'flex-start',
+  },
+  mobileCalendarContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+  },
+  webDaysContainer: {
+    flex: 1,
+    paddingRight: 16,
+    minWidth: 0,
+  },
+  mobileDaysContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  calendarTitle: {
+    fontWeight: 'bold',
+    color: '#1976d2',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  calendarHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  monthYear: {
+    fontWeight: 'bold',
+    color: '#1976d2',
+    fontSize: 16,
+  },
+  dayHeaders: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 8,
+    width: '100%',
+  },
+  dayHeader: {
+    fontWeight: 'bold',
+    color: '#666',
+    textAlign: 'center',
+    width: '14.28%', // 100% / 7 days = 14.28%
+    minWidth: 32,
+    maxWidth: 40,
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+    width: '100%',
+  },
+  calendarDay: {
+    width: '14.28%', // 100% / 7 days = 14.28%
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+    position: 'relative',
+    minWidth: 32,
+    maxWidth: 40,
+  },
+  emptyDay: {
+    width: '14.28%', // 100% / 7 days = 14.28%
+    height: 32,
+    marginBottom: 4,
+    minWidth: 32,
+    maxWidth: 40,
+  },
+  selectedDay: {
+    backgroundColor: '#1976d2',
+    transform: [{ scale: 1.1 }],
+  },
+  plannedDay: {
+    backgroundColor: '#C8E6C9',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  tripDay: {
+    backgroundColor: '#FFE0B2',
+    borderWidth: 1,
+    borderColor: '#FF9800',
+  },
+  todayDay: {
+    backgroundColor: '#FFCDD2',
+    borderWidth: 2,
+    borderColor: '#F44336',
+  },
+  dayNumber: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: '#1976d2',
+  },
+  selectedDayText: {
+    color: 'white',
+  },
+  plannedDayText: {
+    color: '#2E7D32',
+    fontWeight: 'bold',
+  },
+  tripDayText: {
+    color: '#E65100',
+    fontWeight: 'bold',
+  },
+  todayDayText: {
+    color: '#C62828',
+    fontWeight: 'bold',
+  },
+  planIndicator: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4CAF50',
+  },
+  tripIndicator: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF9800',
+  },
+  calendarLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 4,
+  },
+  calendarNote: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+    fontSize: 11,
   },
   sectionTitle: {
     fontWeight: 'bold',
     marginBottom: 12,
     color: '#1976d2',
   },
-  daysList: {
-    paddingBottom: 100,
-  },
   dayCard: {
+    padding: 16,
     marginBottom: 8,
-    marginHorizontal: 4,
-    elevation: 2,
     borderRadius: 8,
+    backgroundColor: 'white',
   },
-  dayCardContent: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  selectedDayCard: {
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: '#E3F2FD',
+    borderWidth: 2,
+    borderColor: '#1976d2',
   },
-  dayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dayInfo: {
-    minWidth: 90,
-    maxWidth: 120,
-    flexShrink: 0,
-    marginRight: 8,
-  },
-  dayTitle: {
+  selectedDayTitle: {
     fontWeight: 'bold',
     color: '#1976d2',
-    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  dayDate: {
-    color: '#666',
-    marginTop: 2,
-    fontSize: 11,
+  dayDetails: {
+    marginBottom: 16,
   },
-  dayMiddle: {
-    flex: 1,
-    minWidth: 0,
-    marginRight: 8,
-  },
-  parkChip: {
-    backgroundColor: '#E8F5E8',
-    fontSize: 10,
-  },
-  hotelChip: {
-    backgroundColor: '#FFF3E0',
-    fontSize: 10,
-  },
-  dayMeals: {
-    flex: 1,
-    minWidth: 0,
-    marginRight: 8,
-  },
-  mealsRow: {
+  detailRow: {
     flexDirection: 'row',
-    flexWrap: 'nowrap',
-    gap: 4,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  mealChip: {
-    backgroundColor: '#F3E5F5',
-    fontSize: 10,
+  detailLabel: {
+    fontWeight: 'bold',
+    color: '#666',
+    flex: 1,
   },
-  moreMealsChip: {
-    backgroundColor: '#E0E0E0',
-    fontSize: 10,
-  },
-  dayAction: {
-    flexShrink: 0,
-    width: 80,
-    alignItems: 'flex-end',
+  detailValue: {
+    flex: 2,
+    textAlign: 'right',
+    color: '#333',
   },
   editDayButton: {
-    minWidth: 50,
-    height: 32,
+    marginTop: 8,
   },
-  addDayButton: {
-    backgroundColor: '#1976d2',
-    minWidth: 50,
-    height: 32,
+  unplannedDayCard: {
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FF9800',
   },
-  notPlanned: {
-    fontStyle: 'italic',
+  unplannedDayTitle: {
+    fontWeight: 'bold',
+    color: '#FF9800',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  unplannedDayText: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 16,
+  },
+  planDayButton: {
+    marginTop: 8,
+  },
+  noDaysText: {
+    textAlign: 'center',
     color: '#999',
-    fontSize: 11,
-  },
-  noMeals: {
     fontStyle: 'italic',
-    color: '#999',
-    fontSize: 11,
-  },
-  lineText: {
-    fontSize: 12,
-    color: '#444',
-    // Truncation for web and native
-    ...(Platform.OS === 'web' ? {
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      display: 'block',
-      maxWidth: '100%',
-    } : {}),
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#1976d2',
+    marginTop: 20,
   },
   errorText: {
     color: '#d32f2f',
