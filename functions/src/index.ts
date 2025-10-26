@@ -21,7 +21,6 @@ export const scheduleDiningNotifications = functions.firestore
     
     for (const dayDoc of daysSnapshot.docs) {
       const day = dayDoc.data();
-      const dayId = dayDoc.id;
       
       // Check each meal type
       const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
@@ -116,7 +115,6 @@ export const calculateDVCPoints = functions.firestore
       }
       
       // Calculate available points
-      const totalPoints = contract.annual_points + contract.banked_points + contract.borrowed_points;
       const availablePoints = contract.current_points;
       
       if (pointsRequired > availablePoints) {
