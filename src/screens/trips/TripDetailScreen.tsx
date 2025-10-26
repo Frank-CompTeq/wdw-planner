@@ -127,30 +127,29 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
       </Surface>
 
       {/* Main Content - Responsive Layout */}
-      {isWideScreen ? (
-        <View style={styles.webLayout}>
-          {/* Calendar */}
-          <View style={styles.webCalendarContainer}>
-            <DayCalendar
-              startDate={trip.metadata.start_date}
-              endDate={trip.metadata.end_date}
-              days={existingDays}
-              onDateSelect={setSelectedDate}
-              selectedDate={selectedDate}
-              compact={true}
-            />
-          </View>
+      <View style={isWideScreen ? styles.webLayout : styles.mobileLayout}>
+        {/* Calendar */}
+        <View style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer}>
+          <DayCalendar
+            startDate={trip.metadata.start_date}
+            endDate={trip.metadata.end_date}
+            days={existingDays}
+            onDateSelect={setSelectedDate}
+            selectedDate={selectedDate}
+            compact={isWideScreen}
+          />
+        </View>
 
-          {/* Days List */}
-          <View style={styles.webDaysContainer}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Trip Days
-            </Text>
-            
-            <FlatList
-              data={tripDays}
-              keyExtractor={(item, index) => `day-${index}`}
-              renderItem={({ item: date, index }) => {
+        {/* Days List */}
+        <View style={isWideScreen ? styles.webDaysContainer : styles.mobileDaysContainer}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Trip Days
+          </Text>
+          
+          <FlatList
+            data={tripDays}
+            keyExtractor={(item, index) => `day-${index}`}
+            renderItem={({ item: date, index }) => {
               const existingDay = existingDays.find(day => 
                 day.date.toDateString() === date.toDateString()
               );
@@ -250,131 +249,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
             }
           />
         </View>
-      ) : (
-        <View style={styles.mobileLayout}>
-          {/* Calendar */}
-          <View style={styles.mobileCalendarContainer}>
-            <DayCalendar
-              startDate={trip.metadata.start_date}
-              endDate={trip.metadata.end_date}
-              days={existingDays}
-              onDateSelect={setSelectedDate}
-              selectedDate={selectedDate}
-              compact={false}
-            />
-          </View>
-
-          {/* Days List */}
-          <View style={styles.mobileDaysContainer}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Trip Days
-            </Text>
-            
-            <FlatList
-              data={tripDays}
-              keyExtractor={(item, index) => `day-${index}`}
-              renderItem={({ item: date, index }) => {
-                const existingDay = existingDays.find(day => 
-                  day.date.toDateString() === date.toDateString()
-                );
-                
-                return (
-                  <Card style={styles.dayCard}>
-                    <Card.Content style={styles.dayCardContent}>
-                      <View style={styles.dayRow}>
-                        {/* Day Info */}
-                        <View style={styles.dayInfo}>
-                          <Text variant="titleSmall" style={styles.dayTitle}>
-                            Day {index + 1}
-                          </Text>
-                          <Text variant="bodySmall" style={styles.dayDate}>
-                            {formatDate(date)}
-                          </Text>
-                        </View>
-                        
-                        {/* Park & Hotel */}
-                        <View style={styles.dayMiddle}>
-                          {existingDay ? (
-                            <>
-                              <Chip 
-                                icon="map-marker" 
-                                style={styles.parkChip}
-                                compact
-                              >
-                                {existingDay.park || 'No park'}
-                              </Chip>
-                              <Chip 
-                                icon="bed" 
-                                style={styles.hotelChip}
-                                compact
-                              >
-                                {existingDay.hotel || 'No hotel'}
-                              </Chip>
-                            </>
-                          ) : (
-                            <Text variant="bodySmall" style={styles.notPlanned}>
-                              Not planned
-                            </Text>
-                          )}
-                        </View>
-                        
-                        {/* Meals */}
-                        <View style={styles.dayMeals}>
-                          {existingDay && existingDay.meals && existingDay.meals.length > 0 ? (
-                            <View style={styles.mealsRow}>
-                              {existingDay.meals.slice(0, 2).map((meal, mealIndex) => (
-                                <Chip key={mealIndex} style={styles.mealChip} compact>
-                                  {meal.type}: {meal.restaurant || 'TBD'}
-                                </Chip>
-                              ))}
-                              {existingDay.meals.length > 2 && (
-                                <Chip style={styles.moreMealsChip} compact>
-                                  +{existingDay.meals.length - 2}
-                                </Chip>
-                              )}
-                            </View>
-                          ) : (
-                            <Text variant="bodySmall" style={styles.noMeals}>
-                              No meals
-                            </Text>
-                          )}
-                        </View>
-                        
-                        {/* Action Button */}
-                        <View style={styles.dayAction}>
-                          {existingDay ? (
-                            <Button
-                              mode="outlined"
-                              compact
-                              onPress={() => handleEditDay(existingDay)}
-                              style={styles.editDayButton}
-                            >
-                              Edit
-                            </Button>
-                          ) : (
-                            <Button
-                              mode="contained"
-                              compact
-                              onPress={() => handleAddDay()}
-                              style={styles.addDayButton}
-                            >
-                              Plan
-                            </Button>
-                          )}
-                        </View>
-                      </View>
-                    </Card.Content>
-                  </Card>
-                );
-              }}
-              contentContainerStyle={styles.daysList}
-              refreshControl={
-                <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-              }
-            />
-          </View>
-        </View>
-      )}
+      </View>
 
       {/* FAB for adding new day */}
       <FAB
