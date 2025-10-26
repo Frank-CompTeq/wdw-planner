@@ -85,8 +85,8 @@ exports.calculateDVCPoints = functions.firestore
         // Get user's DVC contracts
         const userDoc = await db.collection('users').doc(after.metadata.owner_id).get();
         const userData = userDoc.data();
-        const contracts = (userData === null || userData === void 0 ? void 0 : userData.dvc_contracts) || [];
-        const contract = contracts.find((c) => c.contract_id === contractId);
+        const contracts = ((userData === null || userData === void 0 ? void 0 : userData.dvc_contracts) || []);
+        const contract = contracts.find(c => c.contract_id === contractId);
         if (!contract) {
             throw new functions.https.HttpsError('not-found', 'DVC contract not found');
         }
@@ -96,7 +96,7 @@ exports.calculateDVCPoints = functions.firestore
             throw new functions.https.HttpsError('failed-precondition', `Insufficient points. Required: ${pointsRequired}, Available: ${availablePoints}`);
         }
         // Update contract with used points
-        const updatedContracts = contracts.map((c) => {
+        const updatedContracts = contracts.map(c => {
             if (c.contract_id === contractId) {
                 return Object.assign(Object.assign({}, c), { current_points: c.current_points - pointsRequired });
             }
@@ -118,8 +118,8 @@ exports.validateDVCBooking = functions.https.onCall(async (data, context) => {
     // Get user's DVC contracts
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data();
-    const contracts = (userData === null || userData === void 0 ? void 0 : userData.dvc_contracts) || [];
-    const contract = contracts.find((c) => c.contract_id === contractId);
+    const contracts = ((userData === null || userData === void 0 ? void 0 : userData.dvc_contracts) || []);
+    const contract = contracts.find(c => c.contract_id === contractId);
     if (!contract) {
         return {
             valid: false,

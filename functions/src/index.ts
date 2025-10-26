@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-functions/v1/firestore';
+import type { TripDay, DVCContract, ValidateDVCBookingRequest } from './types';
 
 admin.initializeApp();
 
@@ -20,7 +21,7 @@ export const scheduleDiningNotifications = functions.firestore
     const daysSnapshot = await db.collection('trips').doc(tripId).collection('days').get();
     
     for (const dayDoc of daysSnapshot.docs) {
-      const day = dayDoc.data();
+      const day = dayDoc.data() as TripDay;
       
       // Check each meal type
       const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
@@ -107,9 +108,9 @@ export const calculateDVCPoints = functions.firestore
       // Get user's DVC contracts
       const userDoc = await db.collection('users').doc(after.metadata.owner_id).get();
       const userData = userDoc.data();
-      const contracts = userData?.dvc_contracts || [];
+      const contracts = (userData?.dvc_contracts || []) as DVCContract[];
       
-      const contract = contracts.find((c: any) => c.contract_id === contractId);
+      const contract = contracts.find(c => c.contract_id === contractId);
       if (!contract) {
         throw new functions.https.HttpsError('not-found', 'DVC contract not found');
       }
@@ -125,7 +126,7 @@ export const calculateDVCPoints = functions.firestore
       }
       
       // Update contract with used points
-      const updatedContracts = contracts.map((c: any) => {
+      const updatedContracts = contracts.map(c => {
         if (c.contract_id === contractId) {
           return {
             ...c,
@@ -145,7 +146,7 @@ export const calculateDVCPoints = functions.firestore
     return { success: true };
   });
 
-export const validateDVCBooking = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+export const validateDVCBooking = functions.https.onCall(async (data: ValidateDVCBookingRequest, context: functions.https.CallableContext) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
@@ -156,9 +157,9 @@ export const validateDVCBooking = functions.https.onCall(async (data: any, conte
   // Get user's DVC contracts
   const userDoc = await db.collection('users').doc(userId).get();
   const userData = userDoc.data();
-  const contracts = userData?.dvc_contracts || [];
+  const contracts = (userData?.dvc_contracts || []) as DVCContract[];
   
-  const contract = contracts.find((c: any) => c.contract_id === contractId);
+  const contract = contracts.find(c => c.contract_id === contractId);
   if (!contract) {
     return {
       valid: false,
