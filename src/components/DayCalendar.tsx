@@ -5,21 +5,48 @@ import { Card, Title, Paragraph, Chip } from 'react-native-paper';
 import { TripDay } from '../types';
 
 interface DayCalendarProps {
+  startDate: Date;
+  endDate: Date;
   days: TripDay[];
-  onDayPress: (day: TripDay) => void;
-  selectedDate?: string;
+  onDateSelect: (date: Date | null) => void;
+  selectedDate?: Date | null;
 }
 
-export default function DayCalendar({ days, onDayPress, selectedDate }: DayCalendarProps) {
-  const markedDates = days.reduce((acc, day) => {
+export default function DayCalendar({ startDate, endDate, days, onDateSelect, selectedDate }: DayCalendarProps) {
+  // Create marked dates for the trip period
+  const markedDates: any = {};
+  
+  // Mark trip period
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toISOString().split('T')[0];
+    markedDates[dateStr] = {
+      color: '#E3F2FD',
+      textColor: '#1976d2',
+    };
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  // Mark days with plans
+  days.forEach(day => {
     const dateStr = day.date.toISOString().split('T')[0];
-    acc[dateStr] = {
+    markedDates[dateStr] = {
+      ...markedDates[dateStr],
       marked: true,
       dotColor: getParkColor(day.park),
-      selected: selectedDate === dateStr,
     };
-    return acc;
-  }, {} as any);
+  });
+  
+  // Mark selected date
+  if (selectedDate) {
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    markedDates[selectedDateStr] = {
+      ...markedDates[selectedDateStr],
+      selected: true,
+      selectedColor: '#1976d2',
+      selectedTextColor: '#ffffff',
+    };
+  }
 
   const getParkColor = (park: string | null) => {
     switch (park) {
@@ -54,13 +81,11 @@ export default function DayCalendar({ days, onDayPress, selectedDate }: DayCalen
       <Calendar
         markedDates={markedDates}
         onDayPress={(day) => {
-          const selectedDay = days.find(d => 
-            d.date.toISOString().split('T')[0] === day.dateString
-          );
-          if (selectedDay) {
-            onDayPress(selectedDay);
-          }
+          const selectedDate = new Date(day.dateString);
+          onDateSelect(selectedDate);
         }}
+        minDate={startDate.toISOString().split('T')[0]}
+        maxDate={endDate.toISOString().split('T')[0]}
         theme={{
           backgroundColor: '#ffffff',
           calendarBackground: '#ffffff',
@@ -86,7 +111,7 @@ export default function DayCalendar({ days, onDayPress, selectedDate }: DayCalen
       />
       
       <View style={styles.legend}>
-        <Title style={styles.legendTitle}>Légende</Title>
+        <Title style={styles.legendTitle}>Parks Legend</Title>
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <Chip style={[styles.legendChip, { backgroundColor: '#FF6B6B' }]}>

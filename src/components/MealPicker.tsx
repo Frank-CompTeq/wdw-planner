@@ -1,225 +1,156 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, Title, Button, Chip, Modal, Portal, List } from 'react-native-paper';
-import { Restaurant, Meal } from '../types';
+import { Text, TextInput, Button, Chip, Card } from 'react-native-paper';
+import { Meal } from '../types';
 
 interface MealPickerProps {
-  mealType: 'breakfast' | 'lunch' | 'dinner';
-  currentMeal?: Meal;
-  restaurants: Restaurant[];
-  onMealSelect: (meal: Partial<Meal>) => void;
-  onTimeSelect: (time: string) => void;
+  meals: Meal[];
+  onMealChange: (mealType: string, restaurant: string) => void;
 }
 
-export default function MealPicker({ 
-  mealType, 
-  currentMeal, 
-  restaurants, 
-  onMealSelect, 
-  onTimeSelect 
-}: MealPickerProps) {
-  const [showRestaurantModal, setShowRestaurantModal] = useState(false);
-  const [showTimeModal, setShowTimeModal] = useState(false);
+const MEAL_TYPES = [
+  { id: 'breakfast', name: 'Breakfast', icon: '🌅', time: '07:00-10:00' },
+  { id: 'lunch', name: 'Lunch', icon: '☀️', time: '11:00-14:00' },
+  { id: 'dinner', name: 'Dinner', icon: '🌙', time: '17:00-21:00' },
+];
 
-  const mealTypeLabels = {
-    breakfast: 'Petit-déjeuner',
-    lunch: 'Déjeuner',
-    dinner: 'Dîner'
+const SAMPLE_RESTAURANTS = [
+  { id: 'be-our-guest', name: 'Be Our Guest Restaurant', park: 'Magic Kingdom', type: 'Table Service' },
+  { id: 'cinderella-royal', name: 'Cinderella\'s Royal Table', park: 'Magic Kingdom', type: 'Table Service' },
+  { id: 'space-220', name: 'Space 220', park: 'EPCOT', type: 'Table Service' },
+  { id: 'le-cellier', name: 'Le Cellier Steakhouse', park: 'EPCOT', type: 'Table Service' },
+  { id: 'hollywood-brown', name: 'Hollywood Brown Derby', park: 'Hollywood Studios', type: 'Table Service' },
+  { id: 'yak-yeti', name: 'Yak & Yeti Restaurant', park: 'Animal Kingdom', type: 'Table Service' },
+  { id: 'ohana', name: '\'Ohana', park: 'Polynesian Resort', type: 'Table Service' },
+  { id: 'california-grill', name: 'California Grill', park: 'Contemporary Resort', type: 'Table Service' },
+];
+
+export default function MealPicker({ meals, onMealChange }: MealPickerProps) {
+  const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
+
+  const getMealForType = (mealType: string): Meal | undefined => {
+    return meals.find(meal => meal.type === mealType);
   };
 
-  const timeSlots = {
-    breakfast: ['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00'],
-    lunch: ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'],
-    dinner: ['17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00']
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return '#4CAF50';
-      case 'moderate': return '#FF9800';
-      case 'hard': return '#F44336';
-      default: return '#9E9E9E';
-    }
-  };
-
-  const getDifficultyLabel = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'Facile';
-      case 'moderate': return 'Modéré';
-      case 'hard': return 'Difficile';
-      default: return 'Inconnu';
-    }
+  const handleRestaurantSelect = (mealType: string, restaurant: string) => {
+    onMealChange(mealType, restaurant);
+    setExpandedMeal(null);
   };
 
   return (
-    <Card style={styles.card}>
-      <Card.Content>
-        <Title style={styles.title}>{mealTypeLabels[mealType]}</Title>
-        
-        {currentMeal ? (
-          <View style={styles.currentMeal}>
-            <Chip 
-              icon="restaurant" 
-              style={styles.restaurantChip}
-              onPress={() => setShowRestaurantModal(true)}
-            >
-              {currentMeal.restaurant_name}
-            </Chip>
-            <Chip 
-              icon="clock" 
-              style={styles.timeChip}
-              onPress={() => setShowTimeModal(true)}
-            >
-              {currentMeal.time}
-            </Chip>
-            <Chip 
-              style={[
-                styles.statusChip,
-                { backgroundColor: getStatusColor(currentMeal.status) }
-              ]}
-            >
-              {getStatusLabel(currentMeal.status)}
-            </Chip>
-          </View>
-        ) : (
-          <Button 
-            mode="outlined" 
-            onPress={() => setShowRestaurantModal(true)}
-            style={styles.addButton}
-          >
-            Ajouter un restaurant
-          </Button>
-        )}
-      </Card.Content>
+    <View style={styles.container}>
+      {MEAL_TYPES.map(mealType => {
+        const meal = getMealForType(mealType.id);
+        const isExpanded = expandedMeal === mealType.id;
 
-      {/* Restaurant Selection Modal */}
-      <Portal>
-        <Modal 
-          visible={showRestaurantModal} 
-          onDismiss={() => setShowRestaurantModal(false)}
-          contentContainerStyle={styles.modalContent}
-        >
-          <Title>Choisir un restaurant</Title>
-          {restaurants.map((restaurant) => (
-            <List.Item
-              key={restaurant.id}
-              title={restaurant.name}
-              description={`${restaurant.park_location} • ${getDifficultyLabel(restaurant.difficulty)}`}
-              left={() => (
-                <Chip 
-                  style={[
-                    styles.difficultyChip,
-                    { backgroundColor: getDifficultyColor(restaurant.difficulty) }
-                  ]}
-                >
-                  {restaurant.difficulty}
-                </Chip>
+        return (
+          <Card key={mealType.id} style={styles.mealCard}>
+            <Card.Content>
+              <View style={styles.mealHeader}>
+                <View style={styles.mealInfo}>
+                  <Text variant="titleSmall" style={styles.mealTitle}>
+                    {mealType.icon} {mealType.name}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.mealTime}>
+                    {mealType.time}
+                  </Text>
+                </View>
+                
+                {meal ? (
+                  <Chip 
+                    icon="restaurant" 
+                    style={styles.restaurantChip}
+                    onPress={() => setExpandedMeal(isExpanded ? null : mealType.id)}
+                  >
+                    {meal.restaurant}
+                  </Chip>
+                ) : (
+                  <Button
+                    mode="outlined"
+                    compact
+                    onPress={() => setExpandedMeal(isExpanded ? null : mealType.id)}
+                    style={styles.addButton}
+                  >
+                    Add Restaurant
+                  </Button>
+                )}
+              </View>
+
+              {isExpanded && (
+                <View style={styles.restaurantList}>
+                  <Text variant="bodySmall" style={styles.restaurantListTitle}>
+                    Select Restaurant:
+                  </Text>
+                  <View style={styles.restaurantGrid}>
+                    {SAMPLE_RESTAURANTS.map(restaurant => (
+                      <Chip
+                        key={restaurant.id}
+                        selected={meal?.restaurant === restaurant.name}
+                        onPress={() => handleRestaurantSelect(mealType.id, restaurant.name)}
+                        style={styles.restaurantOption}
+                        icon="restaurant"
+                      >
+                        {restaurant.name}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
               )}
-              onPress={() => {
-                onMealSelect({
-                  restaurant_id: restaurant.id,
-                  restaurant_name: restaurant.name,
-                  status: 'planned'
-                });
-                setShowRestaurantModal(false);
-                setShowTimeModal(true);
-              }}
-            />
-          ))}
-        </Modal>
-      </Portal>
-
-      {/* Time Selection Modal */}
-      <Portal>
-        <Modal 
-          visible={showTimeModal} 
-          onDismiss={() => setShowTimeModal(false)}
-          contentContainerStyle={styles.modalContent}
-        >
-          <Title>Choisir une heure</Title>
-          <View style={styles.timeGrid}>
-            {timeSlots[mealType].map((time) => (
-              <Button
-                key={time}
-                mode={currentMeal?.time === time ? 'contained' : 'outlined'}
-                onPress={() => {
-                  onTimeSelect(time);
-                  setShowTimeModal(false);
-                }}
-                style={styles.timeButton}
-              >
-                {time}
-              </Button>
-            ))}
-          </View>
-        </Modal>
-      </Portal>
-    </Card>
+            </Card.Content>
+          </Card>
+        );
+      })}
+    </View>
   );
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'planned': return '#FF9800';
-    case 'reserved': return '#2196F3';
-    case 'confirmed': return '#4CAF50';
-    default: return '#9E9E9E';
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'planned': return 'Planifié';
-    case 'reserved': return 'Réservé';
-    case 'confirmed': return 'Confirmé';
-    default: return 'Inconnu';
-  }
-};
-
 const styles = StyleSheet.create({
-  card: {
-    marginVertical: 8,
-    marginHorizontal: 16,
+  container: {
+    marginTop: 8,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
+  mealCard: {
+    marginBottom: 8,
+    elevation: 1,
   },
-  currentMeal: {
+  mealHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  mealTitle: {
+    fontWeight: 'bold',
+    color: '#1976d2',
+  },
+  mealTime: {
+    color: '#666',
+    marginTop: 2,
   },
   restaurantChip: {
     backgroundColor: '#E3F2FD',
   },
-  timeChip: {
-    backgroundColor: '#F3E5F5',
-  },
-  statusChip: {
-    backgroundColor: '#FF9800',
-  },
   addButton: {
-    marginTop: 8,
+    borderColor: '#1976d2',
   },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    margin: 20,
-    borderRadius: 8,
-    maxHeight: '80%',
+  restaurantList: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
-  difficultyChip: {
-    height: 24,
+  restaurantListTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#666',
   },
-  timeGrid: {
+  restaurantGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
+    gap: 6,
   },
-  timeButton: {
-    margin: 4,
+  restaurantOption: {
+    marginBottom: 6,
   },
 });
