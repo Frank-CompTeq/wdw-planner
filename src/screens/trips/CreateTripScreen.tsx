@@ -7,6 +7,7 @@ import { useCreateTrip } from '../../hooks/useTrips';
 import { CreateTripInput } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import DatePickerInput from '../../components/DatePickerInput';
 
 interface CreateTripScreenProps {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CreateTrip'>;
@@ -61,10 +62,29 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
   };
 
   const handleDateChange = (field: 'start_date' | 'end_date', date: Date) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: date
-    }));
+    setFormData(prev => {
+      const newData = { ...prev };
+
+      if (field === 'start_date') {
+        newData.start_date = date;
+        // If start date is after end date, adjust end date
+        if (date >= prev.end_date) {
+          const newEndDate = new Date(date);
+          newEndDate.setDate(newEndDate.getDate() + 1);
+          newData.end_date = newEndDate;
+        }
+      } else {
+        newData.end_date = date;
+        // If end date is before start date, adjust start date
+        if (date <= prev.start_date) {
+          const newStartDate = new Date(date);
+          newStartDate.setDate(newStartDate.getDate() - 1);
+          newData.start_date = newStartDate;
+        }
+      }
+
+      return newData;
+    });
   };
 
   return (
@@ -92,35 +112,22 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
 
           <View style={styles.dateRow}>
             <View style={styles.dateInput}>
-              <Text variant="bodyMedium" style={styles.dateLabel}>Start Date</Text>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  // TODO: Implement date picker
-                  const newDate = new Date(formData.start_date);
-                  newDate.setDate(newDate.getDate() + 1);
-                  handleDateChange('start_date', newDate);
-                }}
-                style={styles.dateButton}
-              >
-                {formData.start_date.toLocaleDateString()}
-              </Button>
+              <DatePickerInput
+                label="Start Date"
+                value={formData.start_date}
+                onChange={(date) => handleDateChange('start_date', date)}
+                minimumDate={new Date()}
+                maximumDate={formData.end_date}
+              />
             </View>
-            
+
             <View style={styles.dateInput}>
-              <Text variant="bodyMedium" style={styles.dateLabel}>End Date</Text>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  // TODO: Implement date picker
-                  const newDate = new Date(formData.end_date);
-                  newDate.setDate(newDate.getDate() + 1);
-                  handleDateChange('end_date', newDate);
-                }}
-                style={styles.dateButton}
-              >
-                {formData.end_date.toLocaleDateString()}
-              </Button>
+              <DatePickerInput
+                label="End Date"
+                value={formData.end_date}
+                onChange={(date) => handleDateChange('end_date', date)}
+                minimumDate={formData.start_date}
+              />
             </View>
           </View>
 
@@ -220,13 +227,6 @@ const styles = StyleSheet.create({
   dateInput: {
     flex: 1,
     marginHorizontal: 4,
-  },
-  dateLabel: {
-    marginBottom: 8,
-    color: '#666',
-  },
-  dateButton: {
-    borderColor: '#1976d2',
   },
   divider: {
     marginVertical: 16,
