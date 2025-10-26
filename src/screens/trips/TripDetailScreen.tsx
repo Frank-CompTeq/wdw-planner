@@ -370,11 +370,13 @@ const styles = StyleSheet.create({
   dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
   },
   dayInfo: {
-    minWidth: 80,
+    minWidth: 90,
+    maxWidth: 120,
     flexShrink: 0,
+    marginRight: 8,
   },
   dayTitle: {
     fontWeight: 'bold',
@@ -388,7 +390,8 @@ const styles = StyleSheet.create({
   },
   dayMiddle: {
     flex: 1,
-    minWidth: 120,
+    minWidth: 0,
+    marginRight: 8,
   },
   parkChip: {
     backgroundColor: '#E8F5E8',
@@ -400,7 +403,8 @@ const styles = StyleSheet.create({
   },
   dayMeals: {
     flex: 1,
-    minWidth: 100,
+    minWidth: 0,
+    marginRight: 8,
   },
   mealsRow: {
     flexDirection: 'row',
@@ -417,6 +421,8 @@ const styles = StyleSheet.create({
   },
   dayAction: {
     flexShrink: 0,
+    width: 80,
+    alignItems: 'flex-end',
   },
   editDayButton: {
     minWidth: 50,
@@ -448,6 +454,8 @@ const styles = StyleSheet.create({
       display: 'block',
       maxWidth: '100%',
     } : {}),
+    flexShrink: 1,
+    minWidth: 0,
   },
   fab: {
     position: 'absolute',
