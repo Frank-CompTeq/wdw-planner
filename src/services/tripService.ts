@@ -17,7 +17,7 @@ import {
   // ============= TRIPS =============
   
   export const createTrip = async (userId: string, input: CreateTripInput): Promise<string> => {
-    const metadata: TripMetadata = {
+    const metadata = {
       name: input.name,
       start_date: Timestamp.fromDate(input.start_date),
       end_date: Timestamp.fromDate(input.end_date),
@@ -60,11 +60,18 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
           collection(db, 'trips', tripDoc.id, 'days')
         );
         
-        const days: TripDay[] = daysSnapshot.docs.map(dayDoc => ({
-          id: dayDoc.id,
-          trip_id: tripDoc.id,
-          ...dayDoc.data()
-        } as TripDay));
+        const days: TripDay[] = daysSnapshot.docs.map(dayDoc => {
+          const dayData = dayDoc.data();
+          return {
+            id: dayDoc.id,
+            trip_id: tripDoc.id,
+            date: (dayData.date as any).toDate(),
+            park: dayData.park,
+            hotel: dayData.hotel,
+            meals: dayData.meals || [],
+            notes: dayData.notes
+          };
+        });
   
         return {
           id: tripDoc.id,
@@ -79,10 +86,7 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
             ...tripData.dvc_booking,
             reservation_date: tripData.dvc_booking.reservation_date.toDate()
           } : undefined,
-          days: days.map(day => ({
-            ...day,
-            date: day.date.toDate()
-          })).sort((a, b) => a.date.getTime() - b.date.getTime())
+          days: days.sort((a, b) => a.date.getTime() - b.date.getTime())
         };
       })
     );
@@ -105,11 +109,18 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
       collection(db, 'trips', tripId, 'days')
     );
     
-    const days: TripDay[] = daysSnapshot.docs.map(dayDoc => ({
-      id: dayDoc.id,
-      trip_id: tripId,
-      ...dayDoc.data()
-    } as TripDay));
+    const days: TripDay[] = daysSnapshot.docs.map(dayDoc => {
+      const dayData = dayDoc.data();
+      return {
+        id: dayDoc.id,
+        trip_id: tripId,
+        date: (dayData.date as any).toDate(),
+        park: dayData.park,
+        hotel: dayData.hotel,
+        meals: dayData.meals || [],
+        notes: dayData.notes
+      };
+    });
   
     return {
       id: tripDoc.id,
@@ -124,10 +135,7 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
         ...tripData.dvc_booking,
         reservation_date: tripData.dvc_booking.reservation_date.toDate()
       } : undefined,
-      days: days.map(day => ({
-        ...day,
-        date: day.date.toDate()
-      })).sort((a, b) => a.date.getTime() - b.date.getTime())
+      days: days.sort((a, b) => a.date.getTime() - b.date.getTime())
     };
   };
   
@@ -195,7 +203,7 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
   // ============= DAYS =============
   
   export const createDay = async (input: CreateDayInput): Promise<string> => {
-    const dayData: Omit<TripDay, 'id'> = {
+    const dayData = {
       trip_id: input.trip_id,
       date: Timestamp.fromDate(input.date),
       park: input.park || null,

@@ -17,6 +17,7 @@ export interface DVCContract {
   banked_points: number;
   borrowed_points: number;
   current_points: number;
+  current_points_available?: number;
 }
 
 export interface TripMetadata {
@@ -44,6 +45,7 @@ export interface Meal {
 
 export interface TripDay {
   id: string;
+  trip_id: string;
   date: Date;
   park: string | null;
   hotel: string | null;
@@ -81,6 +83,14 @@ export interface Notification {
   trigger_time: string;
   sent: boolean;
   created_at: Date;
+}
+
+export interface DVCValidationResult {
+  valid: boolean;
+  message: string;
+  points_required?: number;
+  points_available?: number;
+  booking_window_opens?: Date;
 }
 
 // Input types for mutations

@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import type { QueryDocumentSnapshot } from 'firebase-functions/v1/firestore';
 
 admin.initializeApp();
 
@@ -9,9 +10,9 @@ const db = admin.firestore();
 
 export const scheduleDiningNotifications = functions.firestore
   .document('trips/{tripId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap: QueryDocumentSnapshot, context: functions.EventContext) => {
     const trip = snap.data();
-    const tripId = context.params.tripId;
+    const tripId = context.params.tripId as string;
     
     console.log(`Scheduling dining notifications for trip: ${tripId}`);
     
@@ -58,7 +59,7 @@ export const scheduleDiningNotifications = functions.firestore
 export const sendDiningAlerts = functions.pubsub
   .schedule('55 5 * * *') // Daily at 5:55 AM EST
   .timeZone('America/New_York')
-  .onRun(async (context) => {
+  .onRun(async (context: functions.EventContext) => {
     console.log('Running daily dining alerts check...');
     
     const today = new Date();
@@ -92,10 +93,10 @@ export const sendDiningAlerts = functions.pubsub
 
 export const calculateDVCPoints = functions.firestore
   .document('trips/{tripId}')
-  .onUpdate(async (change, context) => {
+  .onUpdate(async (change: functions.Change<QueryDocumentSnapshot>, context: functions.EventContext) => {
     const before = change.before.data();
     const after = change.after.data();
-    const tripId = context.params.tripId;
+    const tripId = context.params.tripId as string;
     
     // Check if DVC booking was added or modified
     if (!before.dvc_booking && after.dvc_booking) {
@@ -146,7 +147,7 @@ export const calculateDVCPoints = functions.firestore
     return { success: true };
   });
 
-export const validateDVCBooking = functions.https.onCall(async (data, context) => {
+export const validateDVCBooking = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
