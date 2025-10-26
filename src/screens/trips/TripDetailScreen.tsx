@@ -123,6 +123,10 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
           <Chip icon="account-group" style={styles.chip}>
             {trip.metadata.shared_with.length + 1} travelers
           </Chip>
+          {/* Debug indicator */}
+          <Chip style={[styles.chip, { backgroundColor: isWideScreen ? '#4CAF50' : '#FF9800' }]}>
+            {isWideScreen ? 'Web Layout' : 'Mobile Layout'} ({screenData.width}px)
+          </Chip>
         </View>
       </Surface>
 
@@ -274,15 +278,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 16,
     minHeight: 0,
-    // Web-specific styles
+    // Force web layout with explicit CSS
     ...(Platform.OS === 'web' && {
       display: 'flex',
-      alignItems: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'stretch',
       justifyContent: 'flex-start',
+      width: '100%',
+      height: '100%',
     }),
   },
   mobileLayout: {
     flex: 1,
+    flexDirection: 'column',
   },
   webCalendarContainer: {
     width: 350,
@@ -293,11 +301,14 @@ const styles = StyleSheet.create({
     elevation: 2,
     padding: 8,
     alignSelf: 'flex-start',
-    // Web-specific styles
+    // Force web calendar positioning
     ...(Platform.OS === 'web' && {
       flexShrink: 0,
       flexGrow: 0,
+      flexBasis: '350px',
       position: 'relative',
+      float: 'left',
+      marginRight: '16px',
     }),
   },
   mobileCalendarContainer: {
@@ -308,11 +319,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 16,
     minWidth: 0,
-    // Web-specific styles
+    // Force web days container
     ...(Platform.OS === 'web' && {
       flexShrink: 1,
       flexGrow: 1,
+      flexBasis: 'auto',
       overflow: 'hidden',
+      position: 'relative',
     }),
   },
   mobileDaysContainer: {
