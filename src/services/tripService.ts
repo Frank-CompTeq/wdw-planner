@@ -12,7 +12,7 @@ import {
     Timestamp 
   } from 'firebase/firestore';
   import { db } from '../config/firebase';
-  import { Trip, TripMetadata, TripDay, CreateTripInput, CreateDayInput } from '../types';
+  import { Trip, TripMetadata, TripDay, CreateTripInput, CreateDayInput, UpdateTripInput, UpdateDayInput } from '../types';
   
   // ============= TRIPS =============
   
@@ -131,8 +131,8 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
     };
   };
   
-  export const updateTrip = async (tripId: string, updates: any): Promise<void> => {
-    const updateData: any = {
+  export const updateTrip = async (tripId: string, updates: UpdateTripInput): Promise<void> => {
+    const updateData: Record<string, any> = {
       'metadata.updated_at': Timestamp.now()
     };
 
@@ -213,11 +213,11 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
   };
   
   export const updateDay = async (
-    tripId: string, 
-    dayId: string, 
-    updates: Partial<Omit<TripDay, 'id' | 'trip_id'>>
+    tripId: string,
+    dayId: string,
+    updates: UpdateDayInput
   ): Promise<void> => {
-    const updateData: any = { ...updates };
+    const updateData: Record<string, any> = { ...updates };
     
     // Convert Date to Timestamp if date is being updated
     if (updates.date) {

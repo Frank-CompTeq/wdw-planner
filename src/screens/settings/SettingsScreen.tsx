@@ -3,8 +3,14 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Button } from 'react-native-paper';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
-export default function SettingsScreen({ navigation }: any) {
+interface SettingsScreenProps {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Settings'>;
+}
+
+export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const handleSignOut = async () => {
     try {
       await signOut(auth);

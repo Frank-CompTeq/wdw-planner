@@ -10,7 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 
 type EditDayScreenProps = {
-  route: { params: { tripId: string; dayId: string; date?: Date } };
+  route: { params: { tripId: string; dayId?: string; date?: string } };
   navigation: NativeStackNavigationProp<RootStackParamList, 'EditDay'>;
 };
 
@@ -48,7 +48,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
 
   // Load existing day data if editing
   useEffect(() => {
-    if (dayId !== 'new' && trip?.days) {
+    if (dayId && dayId !== 'new' && trip?.days) {
       const existingDay = trip.days.find(day => day.id === dayId);
       if (existingDay) {
         setSelectedPark(existingDay.park || '');
@@ -67,9 +67,9 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
 
     setLoading(true);
     try {
-      const dayDate = date || new Date();
-      
-      if (dayId === 'new') {
+      const dayDate = date ? new Date(date) : new Date();
+
+      if (!dayId || dayId === 'new') {
         // Create new day
         await createDayMutation.mutateAsync({
           trip_id: tripId,
@@ -139,11 +139,11 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           />
           <View style={styles.titleContainer}>
             <Text variant="headlineSmall" style={styles.title}>
-              {dayId === 'new' ? 'Plan New Day' : 'Edit Day'}
+              {!dayId || dayId === 'new' ? 'Plan New Day' : 'Edit Day'}
             </Text>
             {date && (
               <Text variant="bodyMedium" style={styles.date}>
-                {formatDate(date)}
+                {formatDate(typeof date === 'string' ? new Date(date) : date)}
               </Text>
             )}
           </View>
@@ -241,7 +241,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           style={styles.saveButton}
           icon="content-save"
         >
-          {dayId === 'new' ? 'Create Day' : 'Save Changes'}
+          {!dayId || dayId === 'new' ? 'Create Day' : 'Save Changes'}
         </Button>
       </View>
     </ScrollView>

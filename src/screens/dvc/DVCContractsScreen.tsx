@@ -1,8 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from 'react-native-paper';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
-export default function DVCContractsScreen({ navigation }: any) {
+interface DVCContractsScreenProps {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'DVCContracts'>;
+}
+
+export default function DVCContractsScreen({ navigation }: DVCContractsScreenProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>DVC Contracts</Text>

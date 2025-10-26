@@ -44,6 +44,7 @@ export interface Meal {
 
 export interface TripDay {
   id: string;
+  trip_id: string;
   date: Date;
   park: string | null;
   hotel: string | null;
@@ -92,6 +93,14 @@ export interface CreateTripInput {
   dvc_contract_id?: string;
 }
 
+export interface UpdateTripInput {
+  name?: string;
+  start_date?: Date;
+  end_date?: Date;
+  use_dvc?: boolean;
+  dvc_contract_id?: string;
+}
+
 export interface CreateDayInput {
   trip_id: string;
   date: Date;
@@ -99,6 +108,14 @@ export interface CreateDayInput {
   hotel?: string;
   meals?: Meal[];
   notes?: string;
+}
+
+export interface UpdateDayInput {
+  park?: string | null;
+  hotel?: string | null;
+  meals?: Meal[];
+  notes?: string;
+  date?: Date;
 }
 
 export interface CreateMealInput {

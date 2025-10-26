@@ -5,9 +5,11 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import { useCreateTrip } from '../../hooks/useTrips';
 import { CreateTripInput } from '../../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
 interface CreateTripScreenProps {
-  navigation: any;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'CreateTrip'>;
 }
 
 export default function CreateTripScreen({ navigation }: CreateTripScreenProps) {
@@ -51,8 +53,8 @@ export default function CreateTripScreen({ navigation }: CreateTripScreenProps) 
       });
       
       navigation.navigate('TripDetail', { tripId });
-    } catch (err: any) {
-      setError(err.message || 'Failed to create trip');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create trip');
     } finally {
       setLoading(false);
     }

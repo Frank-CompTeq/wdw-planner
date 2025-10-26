@@ -6,9 +6,11 @@ import { auth } from '../../config/firebase';
 import { useTrips } from '../../hooks/useTrips';
 import TripCard from '../../components/TripCard';
 import { Trip } from '../../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
 interface TripsListScreenProps {
-  navigation: any;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'TripsList'>;
 }
 
 export default function TripsListScreen({ navigation }: TripsListScreenProps) {

@@ -71,6 +71,7 @@ export interface TripDay {
   park: Park | null;
   hotel: string;
   meals: Meals;
+  notes?: string;
 }
 
 export type Park = 

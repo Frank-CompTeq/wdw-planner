@@ -11,7 +11,7 @@ import {
   addMeal,
   removeMeal
 } from '../services/tripService';
-import { CreateTripInput, CreateDayInput, Trip } from '../types';
+import { CreateTripInput, CreateDayInput, UpdateTripInput, UpdateDayInput, Trip } from '../types';
 
 // ============= TRIPS =============
 
@@ -47,7 +47,7 @@ export const useUpdateTrip = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ tripId, updates }: { tripId: string; updates: any }) =>
+    mutationFn: ({ tripId, updates }: { tripId: string; updates: UpdateTripInput }) =>
       updateTrip(tripId, updates),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['trip', variables.tripId] });
@@ -84,14 +84,14 @@ export const useUpdateDay = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      tripId, 
-      dayId, 
-      updates 
-    }: { 
-      tripId: string; 
-      dayId: string; 
-      updates: any 
+    mutationFn: ({
+      tripId,
+      dayId,
+      updates
+    }: {
+      tripId: string;
+      dayId: string;
+      updates: UpdateDayInput
     }) => updateDay(tripId, dayId, updates),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['trip', variables.tripId] });

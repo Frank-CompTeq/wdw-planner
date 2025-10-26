@@ -41,7 +41,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
 
     // Check if a date is within the trip period
     const isTripDate = (date: Date) => {
-      return date >= startDate && date <= endDate;
+      return date >= trip.metadata.start_date && date <= trip.metadata.end_date;
     };
 
     // Check if a date is today
