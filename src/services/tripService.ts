@@ -68,18 +68,28 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
   
         return {
           id: tripDoc.id,
-          metadata: tripData.metadata as TripMetadata,
-          dvc_booking: tripData.dvc_booking,
-          days: days.sort((a, b) => a.date.seconds - b.date.seconds)
+          metadata: {
+            ...tripData.metadata,
+            start_date: tripData.metadata.start_date.toDate(),
+            end_date: tripData.metadata.end_date.toDate(),
+            created_at: tripData.metadata.created_at.toDate(),
+            updated_at: tripData.metadata.updated_at.toDate()
+          },
+          dvc_booking: tripData.dvc_booking ? {
+            ...tripData.dvc_booking,
+            reservation_date: tripData.dvc_booking.reservation_date.toDate()
+          } : undefined,
+          days: days.map(day => ({
+            ...day,
+            date: day.date.toDate()
+          })).sort((a, b) => a.date.getTime() - b.date.getTime())
         };
       })
     );
   
     // Tri côté client par date de début (plus récent en premier)
     return trips.sort((a, b) => {
-      const dateA = a.metadata.start_date instanceof Date ? a.metadata.start_date : a.metadata.start_date.toDate();
-      const dateB = b.metadata.start_date instanceof Date ? b.metadata.start_date : b.metadata.start_date.toDate();
-      return dateB.getTime() - dateA.getTime();
+      return b.metadata.start_date.getTime() - a.metadata.start_date.getTime();
     });
   };
   
@@ -103,9 +113,21 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
   
     return {
       id: tripDoc.id,
-      metadata: tripData.metadata as TripMetadata,
-      dvc_booking: tripData.dvc_booking,
-      days: days.sort((a, b) => a.date.seconds - b.date.seconds)
+      metadata: {
+        ...tripData.metadata,
+        start_date: tripData.metadata.start_date.toDate(),
+        end_date: tripData.metadata.end_date.toDate(),
+        created_at: tripData.metadata.created_at.toDate(),
+        updated_at: tripData.metadata.updated_at.toDate()
+      },
+      dvc_booking: tripData.dvc_booking ? {
+        ...tripData.dvc_booking,
+        reservation_date: tripData.dvc_booking.reservation_date.toDate()
+      } : undefined,
+      days: days.map(day => ({
+        ...day,
+        date: day.date.toDate()
+      })).sort((a, b) => a.date.getTime() - b.date.getTime())
     };
   };
   

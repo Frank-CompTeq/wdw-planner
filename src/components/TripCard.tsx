@@ -63,7 +63,7 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
           </Paragraph>
           <Paragraph style={styles.stat}>
             🍽️ {trip.days.reduce((total, day) => 
-              total + Object.keys(day.meals).length, 0
+              total + day.meals.length, 0
             )} repas planifiés
           </Paragraph>
         </View>

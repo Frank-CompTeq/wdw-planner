@@ -37,23 +37,18 @@ export interface DVCBooking {
 }
 
 export interface Meal {
-  restaurant_id: string;
-  restaurant_name: string;
+  type: string;
+  restaurant: string;
   time: string;
-  reservation_date: Date;
-  status: 'planned' | 'reserved' | 'confirmed';
 }
 
 export interface TripDay {
   id: string;
   date: Date;
-  park: 'Magic Kingdom' | 'EPCOT' | 'Hollywood Studios' | 'Animal Kingdom' | null;
-  hotel: string;
-  meals: {
-    breakfast?: Meal;
-    lunch?: Meal;
-    dinner?: Meal;
-  };
+  park: string | null;
+  hotel: string | null;
+  meals: Meal[];
+  notes?: string;
 }
 
 export interface Trip {
