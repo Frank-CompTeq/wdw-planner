@@ -3,7 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../config/firebase';
 
-// Screens - à créer
+// Screens
+import LoadingScreen from '../screens/LoadingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import TripsListScreen from '../screens/trips/TripsListScreen';
@@ -32,13 +33,8 @@ export default function AppNavigator() {
   const [user, loading] = useAuthState(auth);
 
   if (loading) {
-    // TODO: Créer un LoadingScreen component
-    return null;
+    return <LoadingScreen />;
   }
-
-  // Mode développement : forcer l'affichage de l'app principale
-  // TODO: Supprimer cette ligne quand Firebase sera configuré
-  const isDevelopmentMode = false; // Firebase est maintenant configuré
 
   return (
     <Stack.Navigator
