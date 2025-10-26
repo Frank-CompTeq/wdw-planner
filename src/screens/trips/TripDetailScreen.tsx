@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, RefreshControl, Platform, Dimensions } from 'react-native';
 import { Text, Surface, Button, FAB, Chip, Card, Divider, IconButton } from 'react-native-paper';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -19,6 +19,15 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
   const [user] = useAuthState(auth);
   const { data: trip, isLoading, error, refetch } = useTrip(tripId);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenData(window);
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   const handleEditTrip = () => {
     navigation.navigate('EditTrip', { tripId });
@@ -76,8 +85,9 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
   const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
   const existingDays = trip.days || [];
   const isWeb = Platform.OS === 'web';
-  const screenWidth = Dimensions.get('window').width;
-  const isWideScreen = screenWidth > 768;
+  const isWideScreen = screenData.width > 768;
+
+  console.log('Screen data:', screenData.width, 'isWideScreen:', isWideScreen, 'isWeb:', isWeb);
 
   return (
     <View style={styles.container}>
@@ -263,6 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     gap: 16,
+    minHeight: 0, // Important for web
   },
   mobileLayout: {
     flex: 1,
@@ -270,10 +281,12 @@ const styles = StyleSheet.create({
   webCalendarContainer: {
     width: 350,
     maxWidth: 350,
+    minWidth: 300,
     backgroundColor: 'white',
     borderRadius: 12,
     elevation: 2,
     padding: 8,
+    alignSelf: 'flex-start',
   },
   mobileCalendarContainer: {
     marginHorizontal: 16,
@@ -282,6 +295,7 @@ const styles = StyleSheet.create({
   webDaysContainer: {
     flex: 1,
     paddingRight: 16,
+    minWidth: 0, // Important for web
   },
   mobileDaysContainer: {
     flex: 1,
