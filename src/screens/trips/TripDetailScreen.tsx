@@ -174,50 +174,21 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                       
                       {/* Park & Hotel */}
                       <View style={styles.dayMiddle}>
-                        {existingDay ? (
-                          <>
-                            <Chip 
-                              icon="map-marker" 
-                              style={styles.parkChip}
-                              compact
-                            >
-                              {existingDay.park || 'No park'}
-                            </Chip>
-                            <Chip 
-                              icon="bed" 
-                              style={styles.hotelChip}
-                              compact
-                            >
-                              {existingDay.hotel || 'No hotel'}
-                            </Chip>
-                          </>
-                        ) : (
-                          <Text variant="bodySmall" style={styles.notPlanned}>
-                            Not planned
-                          </Text>
-                        )}
+                        <Text style={styles.lineText} numberOfLines={1} ellipsizeMode="tail">
+                          {existingDay ? `${existingDay.park || 'No park'} • ${existingDay.hotel || 'No hotel'}` : 'Not planned'}
+                        </Text>
                       </View>
                       
                       {/* Meals */}
                       <View style={styles.dayMeals}>
-                        {existingDay && existingDay.meals && existingDay.meals.length > 0 ? (
-                          <View style={styles.mealsRow}>
-                            {existingDay.meals.slice(0, 2).map((meal, mealIndex) => (
-                              <Chip key={mealIndex} style={styles.mealChip} compact>
-                                {meal.type}: {meal.restaurant || 'TBD'}
-                              </Chip>
-                            ))}
-                            {existingDay.meals.length > 2 && (
-                              <Chip style={styles.moreMealsChip} compact>
-                                +{existingDay.meals.length - 2}
-                              </Chip>
-                            )}
-                          </View>
-                        ) : (
-                          <Text variant="bodySmall" style={styles.noMeals}>
-                            No meals
-                          </Text>
-                        )}
+                        <Text style={styles.lineText} numberOfLines={1} ellipsizeMode="tail">
+                          {existingDay && existingDay.meals && existingDay.meals.length > 0
+                            ? `${existingDay.meals
+                                .slice(0, 2)
+                                .map(meal => `${meal.type}: ${meal.restaurant || 'TBD'}`)
+                                .join(' | ')}${existingDay.meals.length > 2 ? ` +${existingDay.meals.length - 2}` : ''}`
+                            : 'No meals'}
+                        </Text>
                       </View>
                       
                       {/* Action Button */}
@@ -417,9 +388,6 @@ const styles = StyleSheet.create({
   },
   dayMiddle: {
     flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
     minWidth: 120,
   },
   parkChip: {
@@ -436,7 +404,7 @@ const styles = StyleSheet.create({
   },
   mealsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: 4,
   },
   mealChip: {
@@ -468,6 +436,18 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#999',
     fontSize: 11,
+  },
+  lineText: {
+    fontSize: 12,
+    color: '#444',
+    // Truncation for web and native
+    ...(Platform.OS === 'web' ? {
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: 'block',
+      maxWidth: '100%',
+    } : {}),
   },
   fab: {
     position: 'absolute',
