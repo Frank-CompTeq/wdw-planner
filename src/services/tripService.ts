@@ -198,9 +198,10 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
     const dayData: Omit<TripDay, 'id'> = {
       trip_id: input.trip_id,
       date: Timestamp.fromDate(input.date),
-      park: input.park,
-      hotel: input.hotel,
-      meals: {}
+      park: input.park || null,
+      hotel: input.hotel || null,
+      meals: input.meals || [],
+      notes: input.notes || ''
     };
   
     const dayRef = await addDoc(
@@ -216,9 +217,16 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
     dayId: string, 
     updates: Partial<Omit<TripDay, 'id' | 'trip_id'>>
   ): Promise<void> => {
+    const updateData: any = { ...updates };
+    
+    // Convert Date to Timestamp if date is being updated
+    if (updates.date) {
+      updateData.date = Timestamp.fromDate(updates.date);
+    }
+    
     await updateDoc(
       doc(db, 'trips', tripId, 'days', dayId),
-      updates
+      updateData
     );
   };
   

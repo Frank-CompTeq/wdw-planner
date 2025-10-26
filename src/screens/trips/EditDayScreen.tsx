@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, TextInput, Button, Surface, Card, Chip, Divider, IconButton } from 'react-native-paper';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
-import { useTrip } from '../../hooks/useTrips';
+import { useTrip, useCreateDay, useUpdateDay } from '../../hooks/useTrips';
 import { TripDay, Meal } from '../../types';
 import MealPicker from '../../components/MealPicker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -37,6 +37,8 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
   const { tripId, dayId, date } = route.params;
   const [user] = useAuthState(auth);
   const { data: trip } = useTrip(tripId);
+  const createDayMutation = useCreateDay();
+  const updateDayMutation = useUpdateDay();
   
   const [selectedPark, setSelectedPark] = useState<string>('');
   const [selectedHotel, setSelectedHotel] = useState<string>('');
@@ -58,22 +60,43 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
   }, [dayId, trip]);
 
   const handleSave = async () => {
+    if (!selectedPark && !selectedHotel && meals.length === 0) {
+      alert('Please select at least a park, hotel, or plan a meal');
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: Implement save day logic
-      console.log('Saving day:', {
-        tripId,
-        dayId,
-        park: selectedPark,
-        hotel: selectedHotel,
-        meals,
-        notes,
-        date: date || new Date()
-      });
+      const dayDate = date || new Date();
+      
+      if (dayId === 'new') {
+        // Create new day
+        await createDayMutation.mutateAsync({
+          trip_id: tripId,
+          date: dayDate,
+          park: selectedPark || undefined,
+          hotel: selectedHotel || undefined,
+          meals: meals.length > 0 ? meals : undefined,
+          notes: notes || undefined,
+        });
+      } else {
+        // Update existing day
+        await updateDayMutation.mutateAsync({
+          tripId,
+          dayId,
+          updates: {
+            park: selectedPark || null,
+            hotel: selectedHotel || null,
+            meals,
+            notes,
+          }
+        });
+      }
       
       navigation.goBack();
     } catch (error) {
       console.error('Error saving day:', error);
+      alert('Failed to save day. Please try again.');
     } finally {
       setLoading(false);
     }

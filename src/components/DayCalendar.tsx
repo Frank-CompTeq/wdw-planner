@@ -10,9 +10,10 @@ interface DayCalendarProps {
   days: TripDay[];
   onDateSelect: (date: Date | null) => void;
   selectedDate?: Date | null;
+  compact?: boolean;
 }
 
-export default function DayCalendar({ startDate, endDate, days, onDateSelect, selectedDate }: DayCalendarProps) {
+export default function DayCalendar({ startDate, endDate, days, onDateSelect, selectedDate, compact = false }: DayCalendarProps) {
   // Create marked dates for the trip period
   const markedDates: any = {};
   

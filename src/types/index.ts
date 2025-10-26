@@ -97,6 +97,8 @@ export interface CreateDayInput {
   date: Date;
   park?: string;
   hotel?: string;
+  meals?: Meal[];
+  notes?: string;
 }
 
 export interface CreateMealInput {

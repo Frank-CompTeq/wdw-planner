@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, RefreshControl, Platform, Dimensions } from 'react-native';
 import { Text, Surface, Button, FAB, Chip, Card, Divider, IconButton } from 'react-native-paper';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
@@ -75,6 +75,9 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
 
   const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
   const existingDays = trip.days || [];
+  const isWeb = Platform.OS === 'web';
+  const screenWidth = Dimensions.get('window').width;
+  const isWideScreen = screenWidth > 768;
 
   return (
     <View style={styles.container}>
@@ -113,109 +116,115 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
         </View>
       </Surface>
 
-      {/* Calendar */}
-      <DayCalendar
-        startDate={trip.metadata.start_date}
-        endDate={trip.metadata.end_date}
-        days={existingDays}
-        onDateSelect={setSelectedDate}
-        selectedDate={selectedDate}
-      />
+      {/* Main Content - Responsive Layout */}
+      <View style={isWideScreen ? styles.webLayout : styles.mobileLayout}>
+        {/* Calendar */}
+        <View style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer}>
+          <DayCalendar
+            startDate={trip.metadata.start_date}
+            endDate={trip.metadata.end_date}
+            days={existingDays}
+            onDateSelect={setSelectedDate}
+            selectedDate={selectedDate}
+            compact={isWideScreen}
+          />
+        </View>
 
-      {/* Days List */}
-      <View style={styles.daysContainer}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
-          Trip Days
-        </Text>
-        
-        <FlatList
-          data={tripDays}
-          keyExtractor={(item, index) => `day-${index}`}
-          renderItem={({ item: date, index }) => {
-            const existingDay = existingDays.find(day => 
-              day.date.toDateString() === date.toDateString()
-            );
-            
-            return (
-              <Card style={styles.dayCard}>
-                <Card.Content>
-                  <View style={styles.dayHeader}>
-                    <View style={styles.dayInfo}>
-                      <Text variant="titleSmall" style={styles.dayTitle}>
-                        Day {index + 1}
-                      </Text>
-                      <Text variant="bodySmall" style={styles.dayDate}>
-                        {formatDate(date)}
-                      </Text>
+        {/* Days List */}
+        <View style={isWideScreen ? styles.webDaysContainer : styles.mobileDaysContainer}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Trip Days
+          </Text>
+          
+          <FlatList
+            data={tripDays}
+            keyExtractor={(item, index) => `day-${index}`}
+            renderItem={({ item: date, index }) => {
+              const existingDay = existingDays.find(day => 
+                day.date.toDateString() === date.toDateString()
+              );
+              
+              return (
+                <Card style={styles.dayCard}>
+                  <Card.Content>
+                    <View style={styles.dayHeader}>
+                      <View style={styles.dayInfo}>
+                        <Text variant="titleSmall" style={styles.dayTitle}>
+                          Day {index + 1}
+                        </Text>
+                        <Text variant="bodySmall" style={styles.dayDate}>
+                          {formatDate(date)}
+                        </Text>
+                      </View>
+                      
+                      {existingDay ? (
+                        <View style={styles.dayDetails}>
+                          <View style={styles.chipsRow}>
+                            <Chip 
+                              icon="map-marker" 
+                              style={styles.parkChip}
+                              compact
+                            >
+                              {existingDay.park || 'No park'}
+                            </Chip>
+                            <Chip 
+                              icon="bed" 
+                              style={styles.hotelChip}
+                              compact
+                            >
+                              {existingDay.hotel || 'No hotel'}
+                            </Chip>
+                          </View>
+                          <Button
+                            mode="outlined"
+                            compact
+                            onPress={() => handleEditDay(existingDay)}
+                            style={styles.editDayButton}
+                          >
+                            Edit
+                          </Button>
+                        </View>
+                      ) : (
+                        <Button
+                          mode="contained"
+                          compact
+                          onPress={() => handleAddDay()}
+                          style={styles.addDayButton}
+                        >
+                          Plan Day
+                        </Button>
+                      )}
                     </View>
                     
-                    {existingDay ? (
-                      <View style={styles.dayDetails}>
-                        <View style={styles.chipsRow}>
-                          <Chip 
-                            icon="map-marker" 
-                            style={styles.parkChip}
-                            compact
-                          >
-                            {existingDay.park || 'No park'}
-                          </Chip>
-                          <Chip 
-                            icon="bed" 
-                            style={styles.hotelChip}
-                            compact
-                          >
-                            {existingDay.hotel || 'No hotel'}
-                          </Chip>
+                    {existingDay && (
+                      <View style={styles.dayContent}>
+                        <Divider style={styles.divider} />
+                        <Text variant="bodySmall" style={styles.mealsTitle}>
+                          Meals:
+                        </Text>
+                        <View style={styles.mealsContainer}>
+                          {existingDay.meals?.map((meal, mealIndex) => (
+                            <Chip key={mealIndex} style={styles.mealChip} compact>
+                              {meal.type}: {meal.restaurant || 'TBD'}
+                            </Chip>
+                          )) || (
+                            <Text variant="bodySmall" style={styles.noMeals}>
+                              No meals planned
+                            </Text>
+                          )}
                         </View>
-                        <Button
-                          mode="outlined"
-                          compact
-                          onPress={() => handleEditDay(existingDay)}
-                          style={styles.editDayButton}
-                        >
-                          Edit
-                        </Button>
                       </View>
-                    ) : (
-                      <Button
-                        mode="contained"
-                        compact
-                        onPress={() => handleAddDay()}
-                        style={styles.addDayButton}
-                      >
-                        Plan Day
-                      </Button>
                     )}
-                  </View>
-                  
-                  {existingDay && (
-                    <View style={styles.dayContent}>
-                      <Divider style={styles.divider} />
-                      <Text variant="bodySmall" style={styles.mealsTitle}>
-                        Meals:
-                      </Text>
-                      <View style={styles.mealsContainer}>
-                        {existingDay.meals?.map((meal, mealIndex) => (
-                          <Chip key={mealIndex} style={styles.mealChip} compact>
-                            {meal.type}: {meal.restaurant || 'TBD'}
-                          </Chip>
-                        )) || (
-                          <Text variant="bodySmall" style={styles.noMeals}>
-                            No meals planned
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  )}
-                </Card.Content>
-              </Card>
-            );
-          }}
-          contentContainerStyle={styles.daysList}
-          refreshControl={
-            <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-          }
-        />
+                  </Card.Content>
+                </Card>
+              );
+            }}
+            contentContainerStyle={styles.daysList}
+            refreshControl={
+              <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+            }
+          />
+        </View>
       </View>
 
       {/* FAB for adding new day */}
@@ -233,6 +242,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  // Responsive Layout Styles
+  webLayout: {
+    flexDirection: 'row',
+    flex: 1,
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  mobileLayout: {
+    flex: 1,
+  },
+  webCalendarContainer: {
+    width: 350,
+    maxWidth: 350,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    elevation: 2,
+    padding: 8,
+  },
+  mobileCalendarContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  webDaysContainer: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  mobileDaysContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   centerContainer: {
     flex: 1,
