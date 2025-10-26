@@ -78,7 +78,7 @@ export default function DayCalendar({ startDate, endDate, days, onDateSelect, se
   };
 
   return (
-    <View style={styles.container}>
+    <View style={compact ? styles.compactContainer : styles.container}>
       <Calendar
         markedDates={markedDates}
         onDayPress={(day) => {
@@ -106,37 +106,39 @@ export default function DayCalendar({ startDate, endDate, days, onDateSelect, se
           textDayFontWeight: '300',
           textMonthFontWeight: 'bold',
           textDayHeaderFontWeight: '300',
-          textDayFontSize: 16,
-          textMonthFontSize: 16,
-          textDayHeaderFontSize: 13
+          textDayFontSize: compact ? 14 : 16,
+          textMonthFontSize: compact ? 14 : 16,
+          textDayHeaderFontSize: compact ? 11 : 13
         }}
       />
       
-      <View style={styles.legend}>
-        <Title style={styles.legendTitle}>Parks Legend</Title>
-        <View style={styles.legendItems}>
-          <View style={styles.legendItem}>
-            <Chip style={[styles.legendChip, { backgroundColor: '#FF6B6B' }]}>
-              🏰 Magic Kingdom
-            </Chip>
-          </View>
-          <View style={styles.legendItem}>
-            <Chip style={[styles.legendChip, { backgroundColor: '#4ECDC4' }]}>
-              🌍 EPCOT
-            </Chip>
-          </View>
-          <View style={styles.legendItem}>
-            <Chip style={[styles.legendChip, { backgroundColor: '#45B7D1' }]}>
-              🎬 Hollywood Studios
-            </Chip>
-          </View>
-          <View style={styles.legendItem}>
-            <Chip style={[styles.legendChip, { backgroundColor: '#96CEB4' }]}>
-              🦁 Animal Kingdom
-            </Chip>
+      {!compact && (
+        <View style={styles.legend}>
+          <Title style={styles.legendTitle}>Parks Legend</Title>
+          <View style={styles.legendItems}>
+            <View style={styles.legendItem}>
+              <Chip style={[styles.legendChip, { backgroundColor: '#FF6B6B' }]}>
+                🏰 Magic Kingdom
+              </Chip>
+            </View>
+            <View style={styles.legendItem}>
+              <Chip style={[styles.legendChip, { backgroundColor: '#4ECDC4' }]}>
+                🌍 EPCOT
+              </Chip>
+            </View>
+            <View style={styles.legendItem}>
+              <Chip style={[styles.legendChip, { backgroundColor: '#45B7D1' }]}>
+                🎬 Hollywood Studios
+              </Chip>
+            </View>
+            <View style={styles.legendItem}>
+              <Chip style={[styles.legendChip, { backgroundColor: '#96CEB4' }]}>
+                🦁 Animal Kingdom
+              </Chip>
+            </View>
           </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -145,6 +147,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    elevation: 2,
+  },
+  compactContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 8,
+    elevation: 2,
   },
   legend: {
     padding: 16,

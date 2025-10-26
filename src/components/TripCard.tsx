@@ -33,6 +33,16 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
     .filter(Boolean)
     .filter((park, index, arr) => arr.indexOf(park) === index);
 
+  // Get unique restaurants from all meals
+  const restaurants = trip.days
+    .flatMap(day => day.meals)
+    .map(meal => meal.restaurant)
+    .filter(Boolean)
+    .filter((restaurant, index, arr) => arr.indexOf(restaurant) === index)
+    .slice(0, 3); // Show max 3 restaurants
+
+  const totalMeals = trip.days.reduce((total, day) => total + day.meals.length, 0);
+
   return (
     <Card style={styles.card} onPress={onPress}>
       <Card.Content>
@@ -62,11 +72,29 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
             📅 {trip.days.length} jour{trip.days.length > 1 ? 's' : ''}
           </Paragraph>
           <Paragraph style={styles.stat}>
-            🍽️ {trip.days.reduce((total, day) => 
-              total + day.meals.length, 0
-            )} repas planifiés
+            🍽️ {totalMeals} repas planifiés
           </Paragraph>
         </View>
+
+        {restaurants.length > 0 && (
+          <View style={styles.restaurantsContainer}>
+            <Paragraph style={styles.restaurantsTitle}>
+              🍴 Restaurants réservés:
+            </Paragraph>
+            <View style={styles.restaurantsList}>
+              {restaurants.map((restaurant, index) => (
+                <Chip key={index} style={styles.restaurantChip} compact>
+                  {restaurant}
+                </Chip>
+              ))}
+              {trip.days.flatMap(day => day.meals).length > restaurants.length && (
+                <Chip style={styles.moreChip} compact>
+                  +{trip.days.flatMap(day => day.meals).length - restaurants.length} autres
+                </Chip>
+              )}
+            </View>
+          </View>
+        )}
       </Card.Content>
       
       {onEdit && (
@@ -118,5 +146,30 @@ const styles = StyleSheet.create({
   stat: {
     fontSize: 14,
     color: '#666',
+  },
+  restaurantsContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  restaurantsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1976d2',
+    marginBottom: 6,
+  },
+  restaurantsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  restaurantChip: {
+    backgroundColor: '#E8F5E8',
+    marginBottom: 4,
+  },
+  moreChip: {
+    backgroundColor: '#F5F5F5',
+    marginBottom: 4,
   },
 });
