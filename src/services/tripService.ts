@@ -200,7 +200,7 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
       date: Timestamp.fromDate(input.date),
       park: input.park || null,
       hotel: input.hotel || null,
-      meals: input.meals || [],
+      meals: input.meals || {},
       notes: input.notes || ''
     };
   

@@ -16,7 +16,7 @@ export interface DVCContract {
   use_year: string; // ex: "Feb"
   banked_points: number;
   borrowed_points: number;
-  current_points: number;
+  current_points_available: number;
 }
 
 export interface TripMetadata {
@@ -37,9 +37,20 @@ export interface DVCBooking {
 }
 
 export interface Meal {
-  type: string;
-  restaurant: string;
-  time: string;
+  restaurant_id: string;
+  restaurant_name: string;
+  time: string; // "08:00", "12:30", etc.
+  reservation_date?: Date;
+  status: MealStatus;
+  notes?: string;
+}
+
+export type MealStatus = 'planned' | 'reserved' | 'confirmed' | 'cancelled';
+
+export interface Meals {
+  breakfast?: Meal;
+  lunch?: Meal;
+  dinner?: Meal;
 }
 
 export interface TripDay {
@@ -48,7 +59,7 @@ export interface TripDay {
   date: Date;
   park: string | null;
   hotel: string | null;
-  meals: Meal[];
+  meals: Meals;
   notes?: string;
 }
 
@@ -106,14 +117,14 @@ export interface CreateDayInput {
   date: Date;
   park?: string;
   hotel?: string;
-  meals?: Meal[];
+  meals?: Meals;
   notes?: string;
 }
 
 export interface UpdateDayInput {
   park?: string | null;
   hotel?: string | null;
-  meals?: Meal[];
+  meals?: Meals;
   notes?: string;
   date?: Date;
 }

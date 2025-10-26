@@ -33,15 +33,28 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
     .filter(Boolean)
     .filter((park, index, arr) => arr.indexOf(park) === index);
 
-  // Get unique restaurants from all meals
-  const restaurants = trip.days
-    .flatMap(day => day.meals)
-    .map(meal => meal.restaurant)
-    .filter(Boolean)
-    .filter((restaurant, index, arr) => arr.indexOf(restaurant) === index)
-    .slice(0, 3); // Show max 3 restaurants
+  // Helper to count meals in Meals object
+  const countMeals = (meals: any) => {
+    if (!meals) return 0;
+    let count = 0;
+    if (meals.breakfast) count++;
+    if (meals.lunch) count++;
+    if (meals.dinner) count++;
+    return count;
+  };
 
-  const totalMeals = trip.days.reduce((total, day) => total + day.meals.length, 0);
+  // Get unique restaurants from all meals
+  const restaurants: string[] = [];
+  trip.days.forEach(day => {
+    if (day.meals) {
+      if (day.meals.breakfast?.restaurant_name) restaurants.push(day.meals.breakfast.restaurant_name);
+      if (day.meals.lunch?.restaurant_name) restaurants.push(day.meals.lunch.restaurant_name);
+      if (day.meals.dinner?.restaurant_name) restaurants.push(day.meals.dinner.restaurant_name);
+    }
+  });
+  const uniqueRestaurants = [...new Set(restaurants)].slice(0, 3); // Show max 3 unique restaurants
+
+  const totalMeals = trip.days.reduce((total, day) => total + countMeals(day.meals), 0);
 
   return (
     <Card style={styles.card} onPress={onPress}>
@@ -76,20 +89,20 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
           </Paragraph>
         </View>
 
-        {restaurants.length > 0 && (
+        {uniqueRestaurants.length > 0 && (
           <View style={styles.restaurantsContainer}>
             <Paragraph style={styles.restaurantsTitle}>
               🍴 Restaurants réservés:
             </Paragraph>
             <View style={styles.restaurantsList}>
-              {restaurants.map((restaurant, index) => (
+              {uniqueRestaurants.map((restaurant, index) => (
                 <Chip key={index} style={styles.restaurantChip} compact>
                   {restaurant}
                 </Chip>
               ))}
-              {trip.days.flatMap(day => day.meals).length > restaurants.length && (
+              {totalMeals > uniqueRestaurants.length && (
                 <Chip style={styles.moreChip} compact>
-                  +{trip.days.flatMap(day => day.meals).length - restaurants.length} autres
+                  +{totalMeals - uniqueRestaurants.length} autres
                 </Chip>
               )}
             </View>

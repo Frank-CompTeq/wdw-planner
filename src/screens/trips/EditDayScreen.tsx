@@ -4,7 +4,7 @@ import { Text, TextInput, Button, Surface, Card, Chip, Divider, IconButton } fro
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import { useTrip, useCreateDay, useUpdateDay } from '../../hooks/useTrips';
-import { TripDay, Meal } from '../../types';
+import { TripDay, Meals } from '../../types';
 import MealPicker from '../../components/MealPicker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -42,7 +42,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
   
   const [selectedPark, setSelectedPark] = useState<string>('');
   const [selectedHotel, setSelectedHotel] = useState<string>('');
-  const [meals, setMeals] = useState<Meal[]>([]);
+  const [meals, setMeals] = useState<Meals>({});
   const [notes, setNotes] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
@@ -53,14 +53,18 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
       if (existingDay) {
         setSelectedPark(existingDay.park || '');
         setSelectedHotel(existingDay.hotel || '');
-        setMeals(existingDay.meals || []);
+        setMeals(existingDay.meals || {});
         setNotes(existingDay.notes || '');
       }
     }
   }, [dayId, trip]);
 
+  const hasMeals = () => {
+    return !!(meals.breakfast || meals.lunch || meals.dinner);
+  };
+
   const handleSave = async () => {
-    if (!selectedPark && !selectedHotel && meals.length === 0) {
+    if (!selectedPark && !selectedHotel && !hasMeals()) {
       alert('Please select at least a park, hotel, or plan a meal');
       return;
     }
@@ -76,7 +80,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           date: dayDate,
           park: selectedPark || undefined,
           hotel: selectedHotel || undefined,
-          meals: meals.length > 0 ? meals : undefined,
+          meals: hasMeals() ? meals : undefined,
           notes: notes || undefined,
         });
       } else {
@@ -92,7 +96,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           }
         });
       }
-      
+
       navigation.goBack();
     } catch (error) {
       console.error('Error saving day:', error);
@@ -102,18 +106,23 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
     }
   };
 
-  const handleMealChange = (mealType: string, restaurant: string) => {
-    setMeals(prev => {
-      const existingMeal = prev.find(meal => meal.type === mealType);
-      if (existingMeal) {
-        return prev.map(meal => 
-          meal.type === mealType 
-            ? { ...meal, restaurant }
-            : meal
-        );
-      } else {
-        return [...prev, { type: mealType, restaurant, time: '' }];
+  const handleMealChange = (mealType: 'breakfast' | 'lunch' | 'dinner', restaurantId: string, restaurantName: string) => {
+    setMeals(prev => ({
+      ...prev,
+      [mealType]: {
+        restaurant_id: restaurantId,
+        restaurant_name: restaurantName,
+        time: '',
+        status: 'planned' as const
       }
+    }));
+  };
+
+  const handleMealRemove = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    setMeals(prev => {
+      const updated = { ...prev };
+      delete updated[mealType];
+      return updated;
     });
   };
 
@@ -209,6 +218,7 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           <MealPicker
             meals={meals}
             onMealChange={handleMealChange}
+            onMealRemove={handleMealRemove}
           />
         </Card.Content>
       </Card>

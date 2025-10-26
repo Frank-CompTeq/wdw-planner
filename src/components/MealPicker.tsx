@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, TextInput, Button, Chip, Card } from 'react-native-paper';
-import { Meal } from '../types';
+import { Text, TextInput, Button, Chip, Card, IconButton } from 'react-native-paper';
+import { Meals } from '../types';
 
 interface MealPickerProps {
-  meals: Meal[];
-  onMealChange: (mealType: string, restaurant: string) => void;
+  meals: Meals;
+  onMealChange: (mealType: 'breakfast' | 'lunch' | 'dinner', restaurantId: string, restaurantName: string) => void;
+  onMealRemove?: (mealType: 'breakfast' | 'lunch' | 'dinner') => void;
 }
 
 const MEAL_TYPES = [
@@ -25,22 +26,28 @@ const SAMPLE_RESTAURANTS = [
   { id: 'california-grill', name: 'California Grill', park: 'Contemporary Resort', type: 'Table Service' },
 ];
 
-export default function MealPicker({ meals, onMealChange }: MealPickerProps) {
+export default function MealPicker({ meals, onMealChange, onMealRemove }: MealPickerProps) {
   const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
 
-  const getMealForType = (mealType: string): Meal | undefined => {
-    return meals.find(meal => meal.type === mealType);
+  const getMealForType = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    return meals[mealType];
   };
 
-  const handleRestaurantSelect = (mealType: string, restaurant: string) => {
-    onMealChange(mealType, restaurant);
+  const handleRestaurantSelect = (mealType: 'breakfast' | 'lunch' | 'dinner', restaurantId: string, restaurantName: string) => {
+    onMealChange(mealType, restaurantId, restaurantName);
     setExpandedMeal(null);
+  };
+
+  const handleRemoveMeal = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    if (onMealRemove) {
+      onMealRemove(mealType);
+    }
   };
 
   return (
     <View style={styles.container}>
       {MEAL_TYPES.map(mealType => {
-        const meal = getMealForType(mealType.id);
+        const meal = getMealForType(mealType.id as 'breakfast' | 'lunch' | 'dinner');
         const isExpanded = expandedMeal === mealType.id;
 
         return (
@@ -55,15 +62,25 @@ export default function MealPicker({ meals, onMealChange }: MealPickerProps) {
                     {mealType.time}
                   </Text>
                 </View>
-                
+
                 {meal ? (
-                  <Chip 
-                    icon="restaurant" 
-                    style={styles.restaurantChip}
-                    onPress={() => setExpandedMeal(isExpanded ? null : mealType.id)}
-                  >
-                    {meal.restaurant}
-                  </Chip>
+                  <View style={styles.selectedMeal}>
+                    <Chip
+                      icon="restaurant"
+                      style={styles.restaurantChip}
+                      onPress={() => setExpandedMeal(isExpanded ? null : mealType.id)}
+                    >
+                      {meal.restaurant_name}
+                    </Chip>
+                    {onMealRemove && (
+                      <IconButton
+                        icon="close"
+                        size={20}
+                        onPress={() => handleRemoveMeal(mealType.id as 'breakfast' | 'lunch' | 'dinner')}
+                        style={styles.removeButton}
+                      />
+                    )}
+                  </View>
                 ) : (
                   <Button
                     mode="outlined"
@@ -85,8 +102,12 @@ export default function MealPicker({ meals, onMealChange }: MealPickerProps) {
                     {SAMPLE_RESTAURANTS.map(restaurant => (
                       <Chip
                         key={restaurant.id}
-                        selected={meal?.restaurant === restaurant.name}
-                        onPress={() => handleRestaurantSelect(mealType.id, restaurant.name)}
+                        selected={meal?.restaurant_id === restaurant.id}
+                        onPress={() => handleRestaurantSelect(
+                          mealType.id as 'breakfast' | 'lunch' | 'dinner',
+                          restaurant.id,
+                          restaurant.name
+                        )}
                         style={styles.restaurantOption}
                         icon="restaurant"
                       >
@@ -119,6 +140,14 @@ const styles = StyleSheet.create({
   },
   mealInfo: {
     flex: 1,
+  },
+  selectedMeal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  removeButton: {
+    margin: 0,
   },
   mealTitle: {
     fontWeight: 'bold',

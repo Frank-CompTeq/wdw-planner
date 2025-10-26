@@ -19,12 +19,22 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [screenData] = useState(Dimensions.get('window'));
 
+  // Count meals in Meals object
+  const countMeals = (meals: any) => {
+    if (!meals) return 0;
+    let count = 0;
+    if (meals.breakfast) count++;
+    if (meals.lunch) count++;
+    if (meals.dinner) count++;
+    return count;
+  };
+
   // Enhanced calendar component
   const EnhancedCalendar = () => {
     const calendarDays = getCalendarDays(trip.metadata.start_date, trip.metadata.end_date);
     const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
     const isWideScreen = screenData.width > 768;
-    
+
     // Get day data for a specific date
     const getDayData = (date: Date) => {
       return trip.days?.find(day => {
@@ -36,7 +46,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
     // Check if a day has planning
     const hasPlanning = (date: Date) => {
       const dayData = getDayData(date);
-      return dayData && (dayData.park || dayData.hotel || (dayData.meals && dayData.meals.length > 0));
+      return dayData && (dayData.park || dayData.hotel || countMeals(dayData.meals) > 0);
     };
 
     // Check if a date is within the trip period
@@ -260,7 +270,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                     <View style={styles.detailRow}>
                       <Text variant="bodyMedium" style={styles.detailLabel}>Meals:</Text>
                       <Text variant="bodyMedium" style={styles.detailValue}>
-                        {dayData.meals ? `${dayData.meals.length} planned` : 'None planned'}
+                        {countMeals(dayData.meals) > 0 ? `${countMeals(dayData.meals)} planned` : 'None planned'}
                       </Text>
                     </View>
                   </View>
@@ -306,7 +316,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                     Hotel: {day.hotel || 'Not planned'}
                   </Text>
                   <Text variant="bodySmall">
-                    Meals: {day.meals ? day.meals.length : 0}
+                    Meals: {countMeals(day.meals)}
                   </Text>
                 </Surface>
               ))
