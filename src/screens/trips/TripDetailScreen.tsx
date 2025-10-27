@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Platform, Dimensions } from 'react-native';
-import { Surface, Button } from 'react-native-paper';
+import { View, StyleSheet, Platform, Dimensions } from 'react-native';
+import { Surface, Button, Text } from 'react-native-paper';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import { useTrip } from '../../hooks/useTrips';
@@ -18,136 +18,6 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
   const { data: trip, isLoading, error, refetch } = useTrip(tripId);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [screenData] = useState(Dimensions.get('window'));
-
-  // Enhanced calendar component
-  const EnhancedCalendar = () => {
-    const calendarDays = getCalendarDays(trip.metadata.start_date, trip.metadata.end_date);
-    const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
-    const isWideScreen = screenData.width > 768;
-    
-    // Get day data for a specific date
-    const getDayData = (date: Date) => {
-      return trip.days?.find(day => {
-        const dayDate = new Date(day.date);
-        return dayDate.toDateString() === date.toDateString();
-      });
-    };
-
-    // Check if a day has planning
-    const hasPlanning = (date: Date) => {
-      const dayData = getDayData(date);
-      return dayData && (dayData.park || dayData.hotel || (dayData.meals && dayData.meals.length > 0));
-    };
-
-    // Check if a date is within the trip period
-    const isTripDate = (date: Date) => {
-      return date >= startDate && date <= endDate;
-    };
-
-    // Check if a date is today
-    const isToday = (date: Date) => {
-      const today = new Date();
-      return date.toDateString() === today.toDateString();
-    };
-
-    // Handle day selection
-    const handleDayPress = (date: Date) => {
-      setSelectedDate(date);
-    };
-
-    return (
-      <Surface style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer} elevation={2}>
-        <Text variant="titleMedium" style={styles.calendarTitle}>
-          Trip Calendar
-        </Text>
-        
-        {/* Month/Year Header */}
-        <View style={styles.calendarHeader}>
-          <Text variant="bodyLarge" style={styles.monthYear}>
-            {trip.metadata.start_date.toLocaleDateString('en', { month: 'long', year: 'numeric' })}
-          </Text>
-        </View>
-
-        {/* Day Headers */}
-        <View style={styles.dayHeaders}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <Text key={day} variant="caption" style={styles.dayHeader}>
-              {day}
-            </Text>
-          ))}
-        </View>
-
-        {/* Calendar Grid */}
-        <View style={styles.calendarGrid}>
-          {calendarDays.map((date, index) => {
-            if (!date) {
-              // Empty cell for days before month starts
-              return (
-                <View key={index} style={styles.emptyDay} />
-              );
-            }
-            
-            const dayData = getDayData(date);
-            const isSelected = selectedDate?.toDateString() === date.toDateString();
-            const hasPlan = hasPlanning(date);
-            const isTrip = isTripDate(date);
-            const isCurrentDay = isToday(date);
-            
-            return (
-              <Surface 
-                key={index} 
-                style={[
-                  styles.calendarDay,
-                  isTrip && styles.tripDay,
-                  isSelected && styles.selectedDay,
-                  hasPlan && styles.plannedDay,
-                  isCurrentDay && styles.todayDay
-                ]} 
-                elevation={isSelected ? 3 : 1}
-                onTouchEnd={() => handleDayPress(date)}
-              >
-                <Text variant="bodySmall" style={[
-                  styles.dayNumber,
-                  isTrip && styles.tripDayText,
-                  isSelected && styles.selectedDayText,
-                  hasPlan && styles.plannedDayText,
-                  isCurrentDay && styles.todayDayText
-                ]}>
-                  {date.getDate()}
-                </Text>
-                {hasPlan && (
-                  <View style={styles.planIndicator} />
-                )}
-                {isTrip && !hasPlan && (
-                  <View style={styles.tripIndicator} />
-                )}
-              </Surface>
-            );
-          })}
-        </View>
-
-        {/* Calendar Legend */}
-        <View style={styles.calendarLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, styles.tripDay]} />
-            <Text variant="caption">Dates du voyage</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, styles.plannedDay]} />
-            <Text variant="caption">Jour planifié</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, styles.todayDay]} />
-            <Text variant="caption">Aujourd'hui</Text>
-          </View>
-        </View>
-
-        <Text variant="bodySmall" style={styles.calendarNote}>
-          {tripDays.length} days total • {trip.days?.length || 0} planned
-        </Text>
-      </Surface>
-    );
-  };
 
   const getDaysBetweenDates = (startDate: Date, endDate: Date): Date[] => {
     const days: Date[] = [];
@@ -206,6 +76,138 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
       </View>
     );
   }
+
+  // Enhanced calendar component - defined after null check
+  const EnhancedCalendar = () => {
+    const calendarDays = getCalendarDays(trip.metadata.start_date, trip.metadata.end_date);
+    const tripDays = getDaysBetweenDates(trip.metadata.start_date, trip.metadata.end_date);
+    const isWideScreen = screenData.width > 768;
+    const startDate = trip.metadata.start_date;
+    const endDate = trip.metadata.end_date;
+    
+    // Get day data for a specific date
+    const getDayData = (date: Date) => {
+      return trip.days?.find(day => {
+        const dayDate = new Date(day.date);
+        return dayDate.toDateString() === date.toDateString();
+      });
+    };
+
+    // Check if a day has planning
+    const hasPlanning = (date: Date) => {
+      const dayData = getDayData(date);
+      return dayData && (dayData.park || dayData.hotel || (dayData.meals && dayData.meals.length > 0));
+    };
+
+    // Check if a date is within the trip period
+    const isTripDate = (date: Date) => {
+      return date >= startDate && date <= endDate;
+    };
+
+    // Check if a date is today
+    const isToday = (date: Date) => {
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
+
+    // Handle day selection
+    const handleDayPress = (date: Date) => {
+      setSelectedDate(date);
+    };
+
+    return (
+      <Surface style={isWideScreen ? styles.webCalendarContainer : styles.mobileCalendarContainer} elevation={2}>
+        <Text variant="titleMedium" style={styles.calendarTitle}>
+          Trip Calendar
+        </Text>
+        
+        {/* Month/Year Header */}
+        <View style={styles.calendarHeader}>
+          <Text variant="bodyLarge" style={styles.monthYear}>
+            {trip.metadata.start_date.toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+          </Text>
+        </View>
+
+        {/* Day Headers */}
+        <View style={styles.dayHeaders}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <Text key={day} style={styles.dayHeader}>
+              {day}
+            </Text>
+          ))}
+        </View>
+
+        {/* Calendar Grid */}
+        <View style={styles.calendarGrid}>
+          {calendarDays.map((date, index) => {
+            if (!date) {
+              // Empty cell for days before month starts
+              return (
+                <View key={index} style={styles.emptyDay} />
+              );
+            }
+            
+            const dayData = getDayData(date);
+            const isSelected = selectedDate?.toDateString() === date.toDateString();
+            const hasPlan = hasPlanning(date);
+            const isTrip = isTripDate(date);
+            const isCurrentDay = isToday(date);
+            
+            return (
+              <Surface 
+                key={index} 
+                style={[
+                  styles.calendarDay,
+                  isTrip && styles.tripDay,
+                  isSelected && styles.selectedDay,
+                  hasPlan && styles.plannedDay,
+                  isCurrentDay && styles.todayDay
+                ]} 
+                elevation={isSelected ? 3 : 1}
+                onTouchEnd={() => handleDayPress(date)}
+              >
+                <Text variant="bodySmall" style={[
+                  styles.dayNumber,
+                  isTrip && styles.tripDayText,
+                  isSelected && styles.selectedDayText,
+                  hasPlan && styles.plannedDayText,
+                  isCurrentDay && styles.todayDayText
+                ]}>
+                  {date.getDate()}
+                </Text>
+                {hasPlan && (
+                  <View style={styles.planIndicator} />
+                )}
+                {isTrip && !hasPlan && (
+                  <View style={styles.tripIndicator} />
+                )}
+              </Surface>
+            );
+          })}
+        </View>
+
+        {/* Calendar Legend */}
+        <View style={styles.calendarLegend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.tripDay]} />
+            <Text style={styles.legendText}>Dates du voyage</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.plannedDay]} />
+            <Text style={styles.legendText}>Jour planifié</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, styles.todayDay]} />
+            <Text style={styles.legendText}>Aujourd'hui</Text>
+          </View>
+        </View>
+
+        <Text variant="bodySmall" style={styles.calendarNote}>
+          {tripDays.length} days total • {trip.days?.length || 0} planned
+        </Text>
+      </Surface>
+    );
+  };
 
   const isWideScreen = screenData.width > 768;
 
@@ -266,7 +268,11 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                   </View>
                   <Button 
                     mode="contained" 
-                    onPress={() => navigation.navigate('EditDay', { tripId, dayId: dayData.id })}
+                    onPress={() => navigation.navigate('EditDay', { 
+                      tripId, 
+                      dayId: dayData.id,
+                      date: selectedDate.toISOString()
+                    })}
                     style={styles.editDayButton}
                   >
                     Edit Day
@@ -507,6 +513,10 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginRight: 4,
+  },
+  legendText: {
+    fontSize: 11,
+    color: '#666',
   },
   calendarNote: {
     textAlign: 'center',

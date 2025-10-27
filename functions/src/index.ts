@@ -1,5 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import type { QueryDocumentSnapshot } from 'firebase-functions/v1/firestore';
+import type { TripDay, DVCContract, ValidateDVCBookingRequest } from './types';
 
 admin.initializeApp();
 
@@ -9,9 +11,9 @@ const db = admin.firestore();
 
 export const scheduleDiningNotifications = functions.firestore
   .document('trips/{tripId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap: QueryDocumentSnapshot, context: functions.EventContext) => {
     const trip = snap.data();
-    const tripId = context.params.tripId;
+    const tripId = context.params.tripId as string;
     
     console.log(`Scheduling dining notifications for trip: ${tripId}`);
     
@@ -19,8 +21,7 @@ export const scheduleDiningNotifications = functions.firestore
     const daysSnapshot = await db.collection('trips').doc(tripId).collection('days').get();
     
     for (const dayDoc of daysSnapshot.docs) {
-      const day = dayDoc.data();
-      const dayId = dayDoc.id;
+      const day = dayDoc.data() as TripDay;
       
       // Check each meal type
       const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
@@ -58,7 +59,7 @@ export const scheduleDiningNotifications = functions.firestore
 export const sendDiningAlerts = functions.pubsub
   .schedule('55 5 * * *') // Daily at 5:55 AM EST
   .timeZone('America/New_York')
-  .onRun(async (context) => {
+  .onRun(async (context: functions.EventContext) => {
     console.log('Running daily dining alerts check...');
     
     const today = new Date();
@@ -92,10 +93,10 @@ export const sendDiningAlerts = functions.pubsub
 
 export const calculateDVCPoints = functions.firestore
   .document('trips/{tripId}')
-  .onUpdate(async (change, context) => {
+  .onUpdate(async (change: functions.Change<QueryDocumentSnapshot>, context: functions.EventContext) => {
     const before = change.before.data();
     const after = change.after.data();
-    const tripId = context.params.tripId;
+    const tripId = context.params.tripId as string;
     
     // Check if DVC booking was added or modified
     if (!before.dvc_booking && after.dvc_booking) {
@@ -107,15 +108,14 @@ export const calculateDVCPoints = functions.firestore
       // Get user's DVC contracts
       const userDoc = await db.collection('users').doc(after.metadata.owner_id).get();
       const userData = userDoc.data();
-      const contracts = userData?.dvc_contracts || [];
+      const contracts = (userData?.dvc_contracts || []) as DVCContract[];
       
-      const contract = contracts.find((c: any) => c.contract_id === contractId);
+      const contract = contracts.find(c => c.contract_id === contractId);
       if (!contract) {
         throw new functions.https.HttpsError('not-found', 'DVC contract not found');
       }
       
       // Calculate available points
-      const totalPoints = contract.annual_points + contract.banked_points + contract.borrowed_points;
       const availablePoints = contract.current_points;
       
       if (pointsRequired > availablePoints) {
@@ -126,7 +126,7 @@ export const calculateDVCPoints = functions.firestore
       }
       
       // Update contract with used points
-      const updatedContracts = contracts.map((c: any) => {
+      const updatedContracts = contracts.map(c => {
         if (c.contract_id === contractId) {
           return {
             ...c,
@@ -146,7 +146,7 @@ export const calculateDVCPoints = functions.firestore
     return { success: true };
   });
 
-export const validateDVCBooking = functions.https.onCall(async (data, context) => {
+export const validateDVCBooking = functions.https.onCall(async (data: ValidateDVCBookingRequest, context: functions.https.CallableContext) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
@@ -157,9 +157,9 @@ export const validateDVCBooking = functions.https.onCall(async (data, context) =
   // Get user's DVC contracts
   const userDoc = await db.collection('users').doc(userId).get();
   const userData = userDoc.data();
-  const contracts = userData?.dvc_contracts || [];
+  const contracts = (userData?.dvc_contracts || []) as DVCContract[];
   
-  const contract = contracts.find((c: any) => c.contract_id === contractId);
+  const contract = contracts.find(c => c.contract_id === contractId);
   if (!contract) {
     return {
       valid: false,

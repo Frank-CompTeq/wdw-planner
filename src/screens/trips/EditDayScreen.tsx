@@ -10,7 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 
 type EditDayScreenProps = {
-  route: { params: { tripId: string; dayId: string; date?: Date } };
+  route: { params: { tripId: string; dayId?: string; date: string } };
   navigation: NativeStackNavigationProp<RootStackParamList, 'EditDay'>;
 };
 
@@ -67,9 +67,9 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
 
     setLoading(true);
     try {
-      const dayDate = date || new Date();
+      const dayDate = date ? new Date(date) : new Date();
       
-      if (dayId === 'new') {
+      if (dayId === 'new' || !dayId) {
         // Create new day
         await createDayMutation.mutateAsync({
           trip_id: tripId,
@@ -139,11 +139,11 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
           />
           <View style={styles.titleContainer}>
             <Text variant="headlineSmall" style={styles.title}>
-              {dayId === 'new' ? 'Plan New Day' : 'Edit Day'}
+              {dayId === 'new' || !dayId ? 'Plan New Day' : 'Edit Day'}
             </Text>
             {date && (
               <Text variant="bodyMedium" style={styles.date}>
-                {formatDate(date)}
+                {formatDate(new Date(date))}
               </Text>
             )}
           </View>

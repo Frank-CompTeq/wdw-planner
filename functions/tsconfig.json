@@ -6,7 +6,10 @@
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017"
+    "target": "es2017",
+    // Skip library type checking to avoid @google-cloud/storage Int32Array generic type issues
+    // This is a known compatibility issue between newer TypeScript versions and certain Firebase libraries
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": [

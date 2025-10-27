@@ -13,6 +13,7 @@ import EditDayScreen from '../screens/trips/EditDayScreen';
 import EditTripScreen from '../screens/trips/EditTripScreen';
 import DVCContractsScreen from '../screens/dvc/DVCContractsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import LoadingScreen from '../components/LoadingScreen';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -32,13 +33,8 @@ export default function AppNavigator() {
   const [user, loading] = useAuthState(auth);
 
   if (loading) {
-    // TODO: Créer un LoadingScreen component
-    return null;
+    return <LoadingScreen />;
   }
-
-  // Mode développement : forcer l'affichage de l'app principale
-  // TODO: Supprimer cette ligne quand Firebase sera configuré
-  const isDevelopmentMode = false; // Firebase est maintenant configuré
 
   return (
     <Stack.Navigator

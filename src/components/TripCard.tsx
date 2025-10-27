@@ -30,7 +30,7 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
 
   const parks = trip.days
     .map(day => day.park)
-    .filter(Boolean)
+    .filter((park): park is string => Boolean(park))
     .filter((park, index, arr) => arr.indexOf(park) === index);
 
   // Get unique restaurants from all meals
