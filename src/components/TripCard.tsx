@@ -28,20 +28,23 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
     }
   };
 
-  const parks = trip.days
+  const days = trip.days ?? [];
+
+  const parks = days
     .map(day => day.park)
     .filter((park): park is string => Boolean(park))
     .filter((park, index, arr) => arr.indexOf(park) === index);
 
   // Get unique restaurants from all meals
-  const restaurants = trip.days
-    .flatMap(day => day.meals)
+  const allMeals = days.flatMap(day => day.meals ?? []);
+
+  const restaurants = allMeals
     .map(meal => meal.restaurant)
     .filter(Boolean)
     .filter((restaurant, index, arr) => arr.indexOf(restaurant) === index)
     .slice(0, 3); // Show max 3 restaurants
 
-  const totalMeals = trip.days.reduce((total, day) => total + day.meals.length, 0);
+  const totalMeals = days.reduce((total, day) => total + (day.meals?.length ?? 0), 0);
 
   return (
     <Card style={styles.card} onPress={onPress}>
@@ -87,9 +90,9 @@ export default function TripCard({ trip, onPress, onEdit }: TripCardProps) {
                   {restaurant}
                 </Chip>
               ))}
-              {trip.days.flatMap(day => day.meals).length > restaurants.length && (
+              {allMeals.length > restaurants.length && (
                 <Chip style={styles.moreChip} compact>
-                  +{trip.days.flatMap(day => day.meals).length - restaurants.length} autres
+                  +{allMeals.length - restaurants.length} autres
                 </Chip>
               )}
             </View>

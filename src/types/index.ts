@@ -37,10 +37,17 @@ export interface DVCBooking {
   reservation_date: Date;
 }
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
+
+export type MealStatus = 'planned' | 'reserved' | 'confirmed' | 'cancelled';
+
 export interface Meal {
-  type: string;
+  type: MealType;
   restaurant: string;
-  time: string;
+  restaurantId?: string;
+  time?: string;
+  status?: MealStatus;
+  notes?: string;
 }
 
 export interface TripDay {
@@ -105,8 +112,8 @@ export interface CreateTripInput {
 export interface CreateDayInput {
   trip_id: string;
   date: Date;
-  park?: string;
-  hotel?: string;
+  park?: string | null;
+  hotel?: string | null;
   meals?: Meal[];
   notes?: string;
 }

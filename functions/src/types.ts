@@ -1,22 +1,25 @@
 // Type definitions for Cloud Functions
 // These mirror the client-side types but are designed for Firestore data
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
+
+export type MealStatus = 'planned' | 'reserved' | 'confirmed' | 'cancelled';
+
 export interface Meal {
-  restaurant_id: string;
-  restaurant_name: string;
-  time: string;
-  status: 'planned' | 'reserved' | 'confirmed';
+  type: MealType;
+  restaurant: string;
+  restaurant_name?: string;
+  restaurant_id?: string;
+  time?: string;
+  status?: MealStatus;
+  notes?: string;
 }
 
 export interface TripDay {
   date: FirebaseFirestore.Timestamp;
   park: string | null;
   hotel: string | null;
-  meals?: {
-    breakfast?: Meal;
-    lunch?: Meal;
-    dinner?: Meal;
-  };
+  meals?: Meal[] | Record<MealType, Meal | null | undefined>;
   notes?: string;
 }
 

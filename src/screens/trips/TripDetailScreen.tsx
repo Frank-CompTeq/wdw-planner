@@ -262,7 +262,9 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                     <View style={styles.detailRow}>
                       <Text variant="bodyMedium" style={styles.detailLabel}>Meals:</Text>
                       <Text variant="bodyMedium" style={styles.detailValue}>
-                        {dayData.meals ? `${dayData.meals.length} planned` : 'None planned'}
+                        {dayData.meals && dayData.meals.length > 0
+                          ? `${dayData.meals.length} planned`
+                          : 'None planned'}
                       </Text>
                     </View>
                   </View>
@@ -312,7 +314,7 @@ export default function TripDetailScreen({ route, navigation }: TripDetailScreen
                     Hotel: {day.hotel || 'Not planned'}
                   </Text>
                   <Text variant="bodySmall">
-                    Meals: {day.meals ? day.meals.length : 0}
+                    Meals: {day.meals?.length ?? 0}
                   </Text>
                 </Surface>
               ))
