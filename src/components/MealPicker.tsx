@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, TextInput, Button, Chip, Card } from 'react-native-paper';
-import { Meal } from '../types';
+import { Meal, MealType } from '../types';
 
 interface MealPickerProps {
   meals: Meal[];
-  onMealChange: (mealType: string, restaurant: string) => void;
+  onMealChange: (mealType: MealType, restaurant: string) => void;
 }
 
-const MEAL_TYPES = [
+const MEAL_TYPES: Array<{ id: MealType; name: string; icon: string; time: string }> = [
   { id: 'breakfast', name: 'Breakfast', icon: '🌅', time: '07:00-10:00' },
   { id: 'lunch', name: 'Lunch', icon: '☀️', time: '11:00-14:00' },
   { id: 'dinner', name: 'Dinner', icon: '🌙', time: '17:00-21:00' },
@@ -26,13 +26,13 @@ const SAMPLE_RESTAURANTS = [
 ];
 
 export default function MealPicker({ meals, onMealChange }: MealPickerProps) {
-  const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
+  const [expandedMeal, setExpandedMeal] = useState<MealType | null>(null);
 
-  const getMealForType = (mealType: string): Meal | undefined => {
+  const getMealForType = (mealType: MealType): Meal | undefined => {
     return meals.find(meal => meal.type === mealType);
   };
 
-  const handleRestaurantSelect = (mealType: string, restaurant: string) => {
+  const handleRestaurantSelect = (mealType: MealType, restaurant: string) => {
     onMealChange(mealType, restaurant);
     setExpandedMeal(null);
   };

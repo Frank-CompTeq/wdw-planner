@@ -4,7 +4,7 @@ import { Text, TextInput, Button, Surface, Card, Chip, Divider, IconButton } fro
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import { useTrip, useCreateDay, useUpdateDay } from '../../hooks/useTrips';
-import { TripDay, Meal } from '../../types';
+import { Meal, MealType } from '../../types';
 import MealPicker from '../../components/MealPicker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -102,17 +102,25 @@ export default function EditDayScreen({ route, navigation }: EditDayScreenProps)
     }
   };
 
-  const handleMealChange = (mealType: string, restaurant: string) => {
+  const handleMealChange = (mealType: MealType, restaurant: string) => {
     setMeals(prev => {
       const existingMeal = prev.find(meal => meal.type === mealType);
       if (existingMeal) {
-        return prev.map(meal => 
-          meal.type === mealType 
+        return prev.map(meal =>
+          meal.type === mealType
             ? { ...meal, restaurant }
             : meal
         );
       } else {
-        return [...prev, { type: mealType, restaurant, time: '' }];
+        return [
+          ...prev,
+          {
+            type: mealType,
+            restaurant,
+            time: '',
+            status: 'planned'
+          }
+        ];
       }
     });
   };

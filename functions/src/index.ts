@@ -1,11 +1,61 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-functions/v1/firestore';
-import type { TripDay, DVCContract, ValidateDVCBookingRequest } from './types';
+import type { TripDay, Meal, MealType, DVCContract, ValidateDVCBookingRequest } from './types';
 
 admin.initializeApp();
 
 const db = admin.firestore();
+
+const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner'];
+
+const normalizeMeals = (rawMeals: TripDay['meals']): Meal[] => {
+  if (!rawMeals) {
+    return [];
+  }
+
+  if (Array.isArray(rawMeals)) {
+    const meals: Meal[] = [];
+    for (const meal of rawMeals) {
+      const type = (meal?.type ?? null) as MealType | null;
+      if (!type) {
+        continue;
+      }
+
+      meals.push({
+        type,
+        restaurant: meal.restaurant ?? meal.restaurant_name ?? '',
+        restaurant_name: meal.restaurant_name ?? meal.restaurant ?? '',
+        restaurant_id: meal.restaurant_id,
+        time: meal.time,
+        status: meal.status,
+        notes: meal.notes
+      });
+    }
+
+    return meals;
+  }
+
+  const meals: Meal[] = [];
+  for (const type of MEAL_TYPES) {
+    const meal = rawMeals[type];
+    if (!meal) {
+      continue;
+    }
+
+    meals.push({
+      type,
+      restaurant: meal.restaurant ?? meal.restaurant_name ?? '',
+      restaurant_name: meal.restaurant_name ?? meal.restaurant ?? '',
+      restaurant_id: meal.restaurant_id,
+      time: meal.time,
+      status: meal.status,
+      notes: meal.notes
+    });
+  }
+
+  return meals;
+};
 
 // ============= DINING NOTIFICATIONS =============
 
@@ -14,7 +64,7 @@ export const scheduleDiningNotifications = functions.firestore
   .onCreate(async (snap: QueryDocumentSnapshot, context: functions.EventContext) => {
     const trip = snap.data();
     const tripId = context.params.tripId as string;
-    
+
     console.log(`Scheduling dining notifications for trip: ${tripId}`);
     
     // Get all days with meals
@@ -22,37 +72,35 @@ export const scheduleDiningNotifications = functions.firestore
     
     for (const dayDoc of daysSnapshot.docs) {
       const day = dayDoc.data() as TripDay;
-      
-      // Check each meal type
-      const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
-      
-      for (const mealType of mealTypes) {
-        const meal = day.meals?.[mealType];
+      const meals = normalizeMeals(day.meals);
+
+      for (const mealType of MEAL_TYPES) {
+        const meal = meals.find((m) => m.type === mealType);
         if (meal && meal.restaurant_id) {
           // Calculate trigger date (60 days before meal date at 6:00 AM EST)
           const mealDate = day.date.toDate();
           const triggerDate = new Date(mealDate);
           triggerDate.setDate(triggerDate.getDate() - 60);
           triggerDate.setHours(6, 0, 0, 0); // 6:00 AM EST
-          
+
           // Create notification
           await db.collection('notifications').add({
             trip_id: tripId,
             user_id: trip.metadata.owner_id,
             type: 'dining_alert',
             meal_type: mealType,
-            restaurant_name: meal.restaurant_name,
+            restaurant_name: meal.restaurant_name ?? meal.restaurant,
             trigger_date: admin.firestore.Timestamp.fromDate(triggerDate),
             trigger_time: '06:00',
             sent: false,
             created_at: admin.firestore.Timestamp.now()
           });
-          
-          console.log(`Scheduled notification for ${meal.restaurant_name} on ${triggerDate.toISOString()}`);
+
+          console.log(`Scheduled notification for ${(meal.restaurant_name ?? meal.restaurant) || 'Unknown restaurant'} on ${triggerDate.toISOString()}`);
         }
       }
     }
-    
+
     return { success: true, notificationsScheduled: true };
   });
 
